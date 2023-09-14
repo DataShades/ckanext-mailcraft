@@ -1,6 +1,5 @@
 import ckan.plugins.toolkit as tk
 
-
 CONF_TEST_CONN = "ckanext.mailcraft.test_conn_on_startup"
 DEF_TEST_CONN = False
 

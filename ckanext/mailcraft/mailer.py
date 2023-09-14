@@ -14,11 +14,8 @@ import ckan.plugins.toolkit as tk
 
 import ckanext.mailcraft.config as mc_config
 from ckanext.mailcraft.exception import MailerException
-from ckanext.mailcraft.types import (
-    Attachment,
-    AttachmentWithoutType,
-    AttachmentWithType,
-)
+from ckanext.mailcraft.types import (Attachment, AttachmentWithoutType,
+                                     AttachmentWithType)
 
 log = logging.getLogger(__name__)
 
@@ -174,7 +171,8 @@ class DefaultMailer:
             attachments=attachments,
         )
 
-    # You can add more methods for different types of emails (e.g., password reset, notifications).
+    # You can add more methods for different types of emails
+    # (e.g., password reset, notifications).
 
     # def send_password_reset_email(self, user):
     #     subject = "Password Reset Request"
