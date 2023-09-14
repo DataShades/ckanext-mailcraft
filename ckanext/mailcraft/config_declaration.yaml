@@ -11,3 +11,8 @@ groups:
         type: int
         description: Specify a timeout for an SMTP connection
         default: 10
+
+      - key: ckanext.mailcraft.stop_outgoing_emails
+        type: bool
+        description: Specify if we are stopping outgoing emails. In this case, we are only saving it to dashboard
+        default: false

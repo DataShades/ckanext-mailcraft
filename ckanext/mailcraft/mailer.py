@@ -13,9 +13,13 @@ import ckan.model as model
 import ckan.plugins.toolkit as tk
 
 import ckanext.mailcraft.config as mc_config
+import ckanext.mailcraft.model as mc_model
 from ckanext.mailcraft.exception import MailerException
-from ckanext.mailcraft.types import (Attachment, AttachmentWithoutType,
-                                     AttachmentWithType)
+from ckanext.mailcraft.types import (
+    Attachment,
+    AttachmentWithoutType,
+    AttachmentWithType,
+)
 
 log = logging.getLogger(__name__)
 
@@ -70,7 +74,16 @@ class DefaultMailer:
         if attachments:
             self._add_attachments(msg, attachments)
 
-        self._send_email(recipients, msg)
+        try:
+            if mc_config.stop_outgoing_emails():
+                self._save_email(msg, body_html, state=mc_model.Email.State.stopped)
+            else:
+                self._send_email(recipients, msg)
+        except MailerException:
+            self._save_email(msg, body_html, state=mc_model.Email.State.failed)
+        else:
+            if not mc_config.stop_outgoing_emails():
+                self._save_email(msg, body_html)
 
     def _add_attachments(self, msg: EmailMessage, attachments) -> None:
         """Add attachments on an email message
@@ -126,6 +139,14 @@ class DefaultMailer:
             raise MailerException(f"{e}")
 
         return conn
+
+    def _save_email(
+        self,
+        msg: EmailMessage,
+        body_html: str,
+        state: str = mc_model.Email.State.success,
+    ) -> None:
+        mc_model.Email.save_mail(msg, body_html, state)
 
     def _send_email(self, recipients, msg: EmailMessage):
         conn = self.get_connection()

@@ -23,3 +23,11 @@ class MailcraftPlugin(plugins.SingletonPlugin):
         if mc_config.is_startup_conn_test_enabled():
             mailer = DefaultMailer()
             mailer.test_conn()
+
+        mailer = DefaultMailer()
+        mailer.mail_recipients(
+            subject="Hello world",
+            recipients=["mutantsan@gmail.com", "kvaqich@gmail.com"],
+            body="Hello world",
+            body_html="Hello world",
+        )

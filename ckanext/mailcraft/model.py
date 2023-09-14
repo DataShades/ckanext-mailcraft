@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any
+from email.message import EmailMessage
 
 from sqlalchemy import Column, DateTime, Integer, Text
 from sqlalchemy.orm import Query
@@ -19,6 +20,7 @@ class Email(tk.BaseModel):
     class State:
         failed = "failed"
         success = "success"
+        stopped = "stopped"
 
     id = Column(Integer, primary_key=True)
 
@@ -36,24 +38,31 @@ class Email(tk.BaseModel):
         return [mail.dictize({}) for mail in query.all()]
 
     @classmethod
-    def save_log(cls, record: logging.LogRecord, message_formatted: str) -> None:
-        model.Session.query.add(
-            cls(
-                name=record.name,
-                path=record.pathname,
-                level=record.levelno,
-                message=record.getMessage(),
-                message_formatted=message_formatted,
-            )
+    def save_mail(
+        cls, msg: EmailMessage, body_html: str, state: str
+    ) -> Email:
+        mail = cls(
+            subject=msg["Subject"],
+            timestamp=msg["Date"],
+            sender=msg["From"],
+            recipient=msg["To"],
+            message=body_html,
+            state=state,
         )
-        model.Session.query.commit()
+
+        model.Session.add(mail)
+        model.Session.commit()
+
+        return mail
 
     def dictize(self, context):
         return {
             "subject": self.subject,
             "timestamp": self.timestamp,
+            "sender": self.sender,
             "recipient": self.recipient,
             "message": self.message,
+            "state": self.state,
         }
 
     @classmethod
