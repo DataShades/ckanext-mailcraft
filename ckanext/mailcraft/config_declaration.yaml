@@ -16,3 +16,8 @@ groups:
         type: bool
         description: Specify if we are stopping outgoing emails. In this case, we are only saving it to dashboard
         default: false
+
+      - key: ckanext.mailcraft.mail_per_page
+        type: int
+        description: Specify a number of mails to show per page on a dashboard
+        default: 20

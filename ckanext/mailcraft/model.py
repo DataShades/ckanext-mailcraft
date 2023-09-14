@@ -57,6 +57,7 @@ class Email(tk.BaseModel):
 
     def dictize(self, context):
         return {
+            "id": self.id,
             "subject": self.subject,
             "timestamp": self.timestamp,
             "sender": self.sender,
