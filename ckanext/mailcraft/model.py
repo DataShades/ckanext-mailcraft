@@ -67,8 +67,8 @@ class Email(tk.BaseModel):
 
     @classmethod
     def clear_emails(cls) -> int:
-        rows_deleted = model.Session.query.query(cls).delete()
-        model.Session.query.commit()
+        rows_deleted = model.Session.query(cls).delete()
+        model.Session.commit()
 
         return rows_deleted
 
@@ -77,3 +77,7 @@ class Email(tk.BaseModel):
         query: Query = model.Session.query(cls).filter(cls.id == mail_id)
 
         return query.one_or_none()
+
+    def delete(self) -> None:
+        model.Session().autoflush = False
+        model.Session.delete(self)

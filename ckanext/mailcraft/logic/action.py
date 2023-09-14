@@ -1,5 +1,8 @@
-import ckan.plugins.toolkit as tk
+from __future__ import annotations
 
+from typing import cast
+
+import ckan.plugins.toolkit as tk
 import ckan.model as model
 from ckan.logic import validate
 
@@ -30,3 +33,17 @@ def mc_mail_show(context, data_dict):
     tk.check_access("mc_mail_show", context, data_dict)
 
     return mc_model.Email.get(data_dict["id"]).dictize(context)  # type: ignore
+
+
+@tk.side_effect_free
+@validate(schema.mail_delete_schema)
+def mc_mail_delete(context, data_dict):
+    """Delete a specific mail"""
+    tk.check_access("mc_mail_delete", context, data_dict)
+
+    mail = cast(mc_model.Email, mc_model.Email.get(data_dict["id"]))
+    mail.delete()
+
+    context["session"].commit()
+
+    return True
