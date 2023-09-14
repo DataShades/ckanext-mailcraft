@@ -7,6 +7,8 @@ from email.message import EmailMessage
 
 from sqlalchemy import Column, DateTime, Integer, Text
 from sqlalchemy.orm import Query
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableDict
 from typing_extensions import Self
 
 import ckan.model as model
@@ -31,6 +33,7 @@ class Email(tk.BaseModel):
     recipient = Column(Text)
     message = Column(Text)
     state = Column(Text, nullable=False, default=State.success)
+    extras = Column("extras", MutableDict.as_mutable(JSONB))
 
     @classmethod
     def all(cls) -> list[dict[str, Any]]:
@@ -39,7 +42,7 @@ class Email(tk.BaseModel):
         return [mail.dictize({}) for mail in query.all()]
 
     @classmethod
-    def save_mail(cls, msg: EmailMessage, body_html: str, state: str) -> Email:
+    def save_mail(cls, msg: EmailMessage, body_html: str, state: str, extras: dict[str, Any]) -> Email:
         mail = cls(
             subject=msg["Subject"],
             timestamp=msg["Date"],
@@ -47,6 +50,7 @@ class Email(tk.BaseModel):
             recipient=msg["To"],
             message=body_html,
             state=state,
+            extras=extras
         )
 
         model.Session.add(mail)
@@ -63,6 +67,7 @@ class Email(tk.BaseModel):
             "recipient": self.recipient,
             "message": self.message,
             "state": self.state,
+            "extras": self.extras or {}
         }
 
     @classmethod

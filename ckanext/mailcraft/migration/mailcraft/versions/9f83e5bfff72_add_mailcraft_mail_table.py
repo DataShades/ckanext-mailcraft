@@ -5,9 +5,10 @@ Revises:
 Create Date: 2023-09-14 11:53:58.371935
 
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "9f83e5bfff72"
@@ -31,6 +32,7 @@ def upgrade():
         sa.Column("recipient", sa.Text),
         sa.Column("message", sa.Text),
         sa.Column("state", sa.Text, server_default="success"),
+        sa.Column("extras", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     )
 
 

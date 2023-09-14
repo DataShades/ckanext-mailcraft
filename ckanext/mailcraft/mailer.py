@@ -114,16 +114,17 @@ class DefaultMailer(BaseMailer):
             self.add_attachments(msg, attachments)
 
         try:
-            import ipdb
-
-            ipdb.set_trace()
             # print(msg.get_body(("html",)).get_content())  # type: ignore
             if mc_config.stop_outgoing_emails():
-                self._save_email(msg, body_html, state=mc_model.Email.State.stopped)
+                self._save_email(
+                    msg, body_html, mc_model.Email.State.stopped, dict(msg.items())
+                )
             else:
                 self._send_email(recipients, msg)
         except MailerException:
-            self._save_email(msg, body_html, state=mc_model.Email.State.failed)
+            self._save_email(
+                msg, body_html, mc_model.Email.State.failed, dict(msg.items())
+            )
         else:
             if not mc_config.stop_outgoing_emails():
                 self._save_email(msg, body_html)
@@ -188,8 +189,9 @@ class DefaultMailer(BaseMailer):
         msg: EmailMessage,
         body_html: str,
         state: str = mc_model.Email.State.success,
+        extras: Optional[dict[str, Any]] = None,
     ) -> None:
-        mc_model.Email.save_mail(msg, body_html, state)
+        mc_model.Email.save_mail(msg, body_html, state, extras or {})
 
     def _send_email(self, recipients, msg: EmailMessage):
         conn = self.get_connection()

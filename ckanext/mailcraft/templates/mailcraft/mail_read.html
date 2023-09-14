@@ -10,7 +10,20 @@
 {% endblock breadcrumb_content %}
 
 {% block ap_content %}
+    {% if mail.extras %}
+        <div class="mailcraft-mail-meta">
+            <h3>{{ _("Email headers") }}</h3>
+            <ul>
+                {% for key, value in mail.extras.items() %}
+                    <li><b>{{ key }}</b>: {{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
     <div class="mailcraft-mail-body">
+        <h3>{{ _("Email body") }}</h3>
+
         {{ mail.message | safe}}
     </div>
 {% endblock ap_content %}
