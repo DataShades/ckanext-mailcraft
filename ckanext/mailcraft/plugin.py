@@ -34,14 +34,6 @@ class MailcraftPlugin(plugins.SingletonPlugin):
             mailer = DefaultMailer()
             mailer.test_conn()
 
-        mailer = DefaultMailer()
-        mailer.mail_recipients(
-            subject="Hello world",
-            recipients=["mutantsan@gmail.com", "kvaqich@gmail.com"],
-            body="Hello world",
-            body_html="Hello world",
-        )
-
     # IAdminPanel
 
     def register_config_sections(
@@ -60,7 +52,7 @@ class MailcraftPlugin(plugins.SingletonPlugin):
                         name="Dashboard",
                         blueprint="mailcraft.dashboard",
                         info="Mailcraft dashboard",
-                    )
+                    ),
                 ],
             )
         )

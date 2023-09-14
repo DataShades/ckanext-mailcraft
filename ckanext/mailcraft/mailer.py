@@ -1,4 +1,5 @@
 from __future__ import annotations
+from abc import ABC, abstractmethod
 
 import logging
 import mimetypes
@@ -24,7 +25,7 @@ from ckanext.mailcraft.types import (
 log = logging.getLogger(__name__)
 
 
-class DefaultMailer:
+class BaseMailer(ABC):
     def __init__(self):
         self.server = tk.config["smtp.server"]
         self.start_tls = tk.config["smtp.starttls"]
@@ -38,6 +39,44 @@ class DefaultMailer:
 
         self.conn_timeout = mc_config.get_conn_timeout()
 
+    @abstractmethod
+    def mail_recipients(
+        self,
+        subject: str,
+        recipients: list[str],
+        body: str,
+        body_html: str,
+        headers: Optional[dict[str, Any]] = None,
+        attachments: Optional[Iterable[Attachment]] = None,
+    ):
+        pass
+
+    @abstractmethod
+    def add_attachments(self, msg: EmailMessage, attachments) -> None:
+        pass
+
+    @abstractmethod
+    def get_connection(self) -> smtplib.SMTP:
+        pass
+
+    @abstractmethod
+    def test_conn(self):
+        pass
+
+    @abstractmethod
+    def mail_user(
+        self,
+        user: str,
+        subject: str,
+        body: str,
+        body_html: str,
+        headers: Optional[dict[str, Any]] = None,
+        attachments: Optional[Iterable[Attachment]] = None,
+    ) -> None:
+        pass
+
+
+class DefaultMailer(BaseMailer):
     def mail_recipients(
         self,
         subject: str,
@@ -72,9 +111,13 @@ class DefaultMailer:
         msg.add_alternative(body_html, subtype="html", cte="base64")
 
         if attachments:
-            self._add_attachments(msg, attachments)
+            self.add_attachments(msg, attachments)
 
         try:
+            import ipdb
+
+            ipdb.set_trace()
+            # print(msg.get_body(("html",)).get_content())  # type: ignore
             if mc_config.stop_outgoing_emails():
                 self._save_email(msg, body_html, state=mc_model.Email.State.stopped)
             else:
@@ -85,7 +128,7 @@ class DefaultMailer:
             if not mc_config.stop_outgoing_emails():
                 self._save_email(msg, body_html)
 
-    def _add_attachments(self, msg: EmailMessage, attachments) -> None:
+    def add_attachments(self, msg: EmailMessage, attachments) -> None:
         """Add attachments on an email message
         If attachment length is 3, it means, that this is an attachment with type"""
 
@@ -191,18 +234,3 @@ class DefaultMailer:
             headers=headers,
             attachments=attachments,
         )
-
-    # You can add more methods for different types of emails
-    # (e.g., password reset, notifications).
-
-    # def send_password_reset_email(self, user):
-    #     subject = "Password Reset Request"
-    #     recipients = [user.email]
-    #     template = "email/password_reset.html"
-    #     self.send_email(subject, recipients, template, user=user)
-
-    # def send_notification_email(self, user, msg):
-    #     subject = "Notification"
-    #     recipients = [user.email]
-    #     template = "email/notification.html"
-    #     self.send_email(subject, recipients, template, user=user, msg=msg)

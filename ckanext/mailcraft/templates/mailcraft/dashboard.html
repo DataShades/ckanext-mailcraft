@@ -15,24 +15,24 @@
             {{ h.csrf_input() }}
 
             {% if page.items %}
-                <div class="bulk-actions">
+                <div class="bulk-actions mb-3">
                     {{ form.select('bulk-action', id='bulk-action', label=_('Action'), options=bulk_options, selected="", error=error) }}
 
-                    <button type="submit" id="bulk-submit" class="btn btn-primary mb-3">
+                    <button type="submit" id="bulk-submit" class="btn btn-primary me-2">
                         {{ _("Apply to selected items") }}
                     </button>
-                </div>
 
-                <button
-                    id="clear-mails-btn"
-                    name="clear_mails"
-                    type="submit"
-                    class="btn btn-danger"
-                    data-module="ap-confirm-action"
-                    data-module-content="{{ _('Are you sure you want to clear all mails?') }}"
-                    data-module-with-data=true>
-                    {{ _("Clear mails") }}
-                </button>
+                    <button
+                        id="clear-mails-btn"
+                        name="clear_mails"
+                        type="submit"
+                        class="btn btn-danger"
+                        data-module="ap-confirm-action"
+                        data-module-content="{{ _('Are you sure you want to clear all mails?') }}"
+                        data-module-with-data=true>
+                        {{ _("Clear mails") }}
+                    </button>
+                </div>
 
                 {% snippet "admin_panel/config/snippets/sortable_table.html", items=page.items, columns=columns, order_by=order_by, sort=sort, bulk_check=1 %}
             {% else %}

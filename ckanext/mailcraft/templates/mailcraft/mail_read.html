@@ -10,5 +10,7 @@
 {% endblock breadcrumb_content %}
 
 {% block ap_content %}
-{{ mail}}
+    <div class="mailcraft-mail-body">
+        {{ mail.message | safe}}
+    </div>
 {% endblock ap_content %}

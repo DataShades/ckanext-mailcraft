@@ -19,6 +19,17 @@ mailcraft.before_request(ap_before_request)
 
 class DashboardView(MethodView):
     def get(self) -> str:
+        from ckanext.mailcraft.mailer import DefaultMailer
+        mailer = DefaultMailer()
+        mailer.mail_recipients(
+            subject="Hello world",
+            recipients=["mutantsan@gmail.com", "kvaqich@gmail.com"],
+            body="Hello world",
+            body_html=tk.render("mailcraft/emails/test.html", extra_vars={
+                "site_url": mailer.site_url,
+                "site_title": mailer.site_title
+            }),
+        )
         return tk.render(
             "mailcraft/dashboard.html",
             extra_vars={
@@ -45,7 +56,6 @@ class DashboardView(MethodView):
             tk.h.ap_table_column("subject", sortable=False, width="10%"),
             tk.h.ap_table_column("sender", sortable=False, width="10%"),
             tk.h.ap_table_column("recipient", sortable=False, width="20%"),
-            tk.h.ap_table_column("message", sortable=False, width="30%"),
             tk.h.ap_table_column("state", sortable=False, width="5%"),
             tk.h.ap_table_column(
                 "timestamp", column_renderer="ap_date", sortable=False, width="10%"
