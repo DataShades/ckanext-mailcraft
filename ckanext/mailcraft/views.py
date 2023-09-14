@@ -22,7 +22,7 @@ class DashboardView(MethodView):
             "mailcraft/dashboard.html",
             extra_vars={
                 "page": self._get_pager(
-                    tk.get_action("mailcraft_mail_list")(self._build_context(), {})
+                    tk.get_action("mc_mail_list")(_build_context(), {})
                 ),
                 "columns": self._get_table_columns(),
                 "bulk_options": self._get_bulk_actions(),
@@ -40,33 +40,31 @@ class DashboardView(MethodView):
 
     def _get_table_columns(self) -> list[dict[str, Any]]:
         return [
-            tk.h.ap_table_column("id", sortable=False),
-            tk.h.ap_table_column("subject", sortable=False),
-            tk.h.ap_table_column("sender", sortable=False),
-            tk.h.ap_table_column("recipient", sortable=False),
-            tk.h.ap_table_column("message", sortable=False),
-            tk.h.ap_table_column("timestamp", column_renderer="ap_date", sortable=False),
-            # tk.h.ap_table_column(
-            #     "actions",
-            #     sortable=False,
-            #     column_renderer="ap_action_render",
-            #     width="10%",
-            #     actions=[
-            #         tk.h.ap_table_action(
-            #             "mailcraft.mail_read",
-            #             tk._("View"),
-            #             {"mailcraft_id": "$id"},
-            #             attributes={"class": "btn btn-danger"},
-            #         )
-            #     ],
-            # ),
+            tk.h.ap_table_column("id", sortable=False, width="5%"),
+            tk.h.ap_table_column("subject", sortable=False, width="10%"),
+            tk.h.ap_table_column("sender", sortable=False, width="10%"),
+            tk.h.ap_table_column("recipient", sortable=False, width="20%"),
+            tk.h.ap_table_column("message", sortable=False, width="30%"),
+            tk.h.ap_table_column("state", sortable=False, width="5%"),
+            tk.h.ap_table_column(
+                "timestamp", column_renderer="ap_date", sortable=False, width="10%"
+            ),
+            tk.h.ap_table_column(
+                "actions",
+                sortable=False,
+                width="10%",
+                column_renderer="ap_action_render",
+                actions=[
+                    tk.h.ap_table_action(
+                        "mailcraft.mail_read",
+                        tk._("View"),
+                        {"mail_id": "$id"},
+                        attributes={"class": "btn btn-primary"},
+                    )
+                ],
+            ),
         ]
-    # subject = Column(Text)
-    # timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
-    # sender = Column(Text)
-    # recipient = Column(Text)
-    # message = Column(Text)
-    # state = Column(Text, nullable=False, default=State.success)
+
     def _get_bulk_actions(self):
         return [
             {
@@ -80,18 +78,12 @@ class DashboardView(MethodView):
             "mailcraft/mailcraft_list.html",
             extra_vars={
                 "page": self._get_pager(
-                    tk.get_action("mailcraft_list")(self._build_context(), {})
+                    tk.get_action("mailcraft_list")(_build_context(), {})
                 ),
                 "columns": self._get_table_columns(),
                 "bulk_options": self._get_bulk_actions(),
             },
         )
-
-    def _build_context(self) -> types.Context:
-        return {
-            "user": tk.current_user.name,
-            "auth_user_obj": tk.current_user,
-        }
 
 
 class ConfigView(MethodView):
@@ -102,8 +94,28 @@ class ConfigView(MethodView):
         return tk.render("mailcraft/dashboard.html")
 
 
+class MailReadView(MethodView):
+    def get(self, mail_id: str) -> str:
+        try:
+            mail = tk.get_action("mc_mail_show")(_build_context(), {"id": mail_id})
+        except tk.ValidationError:
+            return tk.render("mailcraft/404.html")
+
+        return tk.render("mailcraft/mail_read.html", extra_vars={"mail": mail})
+
+
+def _build_context() -> types.Context:
+    return {
+        "user": tk.current_user.name,
+        "auth_user_obj": tk.current_user,
+    }
+
+
 mailcraft.add_url_rule("/config", view_func=ConfigView.as_view("config"))
 mailcraft.add_url_rule("/dashboard", view_func=DashboardView.as_view("dashboard"))
+mailcraft.add_url_rule(
+    "/dashboard/read/<mail_id>", view_func=MailReadView.as_view("mail_read")
+)
 
 
 def get_blueprints():

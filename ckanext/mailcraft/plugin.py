@@ -13,6 +13,8 @@ from ckanext.mailcraft.mailer import DefaultMailer
 
 @toolkit.blanket.blueprints
 @toolkit.blanket.actions
+@toolkit.blanket.auth_functions
+@toolkit.blanket.validators
 class MailcraftPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IConfigurable)

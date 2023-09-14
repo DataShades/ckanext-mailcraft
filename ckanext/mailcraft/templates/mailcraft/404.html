@@ -1,0 +1,11 @@
+{% extends 'admin_panel/base.html' %}
+
+{% import 'macros/form.html' as form %}
+
+{% block breadcrumb_content %}
+    <li class="active">{% link_for _("Mailcraft 404"), named_route='mailcraft.dashboard' %}</li>
+{% endblock breadcrumb_content %}
+
+{% block ap_content %}
+    <p style="font-size: 70px">MAIL NOT FOUND - 404</p>
+{% endblock ap_content %}

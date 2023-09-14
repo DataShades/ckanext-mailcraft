@@ -9,9 +9,9 @@ from ckanext.mailcraft.logic import schema
 
 @tk.side_effect_free
 @validate(schema.mail_list_schema)
-def mailcraft_mail_list(context, data_dict):
+def mc_mail_list(context, data_dict):
     """Return a list of mails from database"""
-    tk.check_access("tour_list", context, data_dict)
+    tk.check_access("mc_mail_list", context, data_dict)
 
     query = model.Session.query(mc_model.Email)
 
@@ -21,3 +21,12 @@ def mailcraft_mail_list(context, data_dict):
     query = query.order_by(mc_model.Email.timestamp.desc())
 
     return [mail.dictize(context) for mail in query.all()]
+
+
+@tk.side_effect_free
+@validate(schema.mail_show_schema)
+def mc_mail_show(context, data_dict):
+    """Return a data for a specific mail"""
+    tk.check_access("mc_mail_show", context, data_dict)
+
+    return mc_model.Email.get(data_dict["id"]).dictize(context)  # type: ignore

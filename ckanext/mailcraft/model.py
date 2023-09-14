@@ -7,6 +7,7 @@ from email.message import EmailMessage
 
 from sqlalchemy import Column, DateTime, Integer, Text
 from sqlalchemy.orm import Query
+from typing_extensions import Self
 
 import ckan.model as model
 from ckan.plugins import toolkit as tk
@@ -38,9 +39,7 @@ class Email(tk.BaseModel):
         return [mail.dictize({}) for mail in query.all()]
 
     @classmethod
-    def save_mail(
-        cls, msg: EmailMessage, body_html: str, state: str
-    ) -> Email:
+    def save_mail(cls, msg: EmailMessage, body_html: str, state: str) -> Email:
         mail = cls(
             subject=msg["Subject"],
             timestamp=msg["Date"],
@@ -72,3 +71,9 @@ class Email(tk.BaseModel):
         model.Session.query.commit()
 
         return rows_deleted
+
+    @classmethod
+    def get(cls, mail_id: str) -> Self | None:
+        query: Query = model.Session.query(cls).filter(cls.id == mail_id)
+
+        return query.one_or_none()
