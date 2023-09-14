@@ -2,6 +2,7 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 from ckan.common import CKANConfig
 
+import ckanext.mailcraft.config as mc_config
 from ckanext.mailcraft.mailer import DefaultMailer
 
 
@@ -19,5 +20,6 @@ class MailcraftPlugin(plugins.SingletonPlugin):
     # IConfigurable
 
     def configure(self, config: CKANConfig) -> None:
-        mailer = DefaultMailer()
-        mailer.test_conn()
+        if mc_config.is_startup_conn_test_enabled():
+            mailer = DefaultMailer()
+            mailer.test_conn()

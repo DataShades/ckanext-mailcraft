@@ -12,6 +12,7 @@ from typing import Any, Iterable, Optional, cast
 import ckan.model as model
 import ckan.plugins.toolkit as tk
 
+import ckanext.mailcraft.config as mc_config
 from ckanext.mailcraft.exception import MailerException
 from ckanext.mailcraft.types import (
     Attachment,
@@ -34,7 +35,7 @@ class DefaultMailer:
         self.site_title = tk.config["ckan.site_title"]
         self.site_url = tk.config["ckan.site_url"]
 
-        self.conn_timeout = 10
+        self.conn_timeout = mc_config.get_conn_timeout()
 
     def mail_recipients(
         self,

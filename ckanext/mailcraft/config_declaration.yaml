@@ -1,0 +1,13 @@
+version: 1
+groups:
+  - annotation: ckanext-mailcraft
+    options:
+      - key: ckanext.mailcraft.test_conn_on_startup
+        type: bool
+        description: Specify do we want to check an SMTP conn on CKAN startup
+        default: false
+
+      - key: ckanext.mailcraft.conn_timeout
+        type: int
+        description: Specify a timeout for an SMTP connection
+        default: 10
