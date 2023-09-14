@@ -1,10 +1,13 @@
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
+from ckan.common import CKANConfig
+
+from ckanext.mailcraft.mailer import DefaultMailer
 
 
 class MailcraftPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
-    
+    plugins.implements(plugins.IConfigurable)
 
     # IConfigurer
 
@@ -13,4 +16,8 @@ class MailcraftPlugin(plugins.SingletonPlugin):
         toolkit.add_public_directory(config_, "public")
         toolkit.add_resource("assets", "mailcraft")
 
-    
+    # IConfigurable
+
+    def configure(self, config: CKANConfig) -> None:
+        mailer = DefaultMailer()
+        mailer.test_conn()
