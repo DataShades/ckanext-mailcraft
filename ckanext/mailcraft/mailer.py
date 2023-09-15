@@ -27,7 +27,7 @@ from ckanext.mailcraft.types import (
 log = logging.getLogger(__name__)
 
 
-class BaseMailer(ABC):
+class AbstractMailer(ABC):
     def __init__(self):
         self.server = tk.config["smtp.server"]
         self.start_tls = tk.config["smtp.starttls"]
@@ -77,8 +77,12 @@ class BaseMailer(ABC):
     ) -> None:
         pass
 
+    @abstractmethod
+    def send_reset_link(self, user: model.User) -> None:
+        pass
 
-class DefaultMailer(BaseMailer):
+
+class DefaultMailer(AbstractMailer):
     def mail_recipients(
         self,
         subject: str,
