@@ -1,6 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 
+import codecs
+import os
 import logging
 import mimetypes
 import smtplib
@@ -235,4 +237,47 @@ class DefaultMailer(BaseMailer):
             body_html=body_html,
             headers=headers,
             attachments=attachments,
+        )
+
+    def send_reset_link(self, user: model.User) -> None:
+        self.create_reset_key(user)
+
+        body = self.get_reset_link_body(user)
+        body_html = self.get_reset_link_body(user, html=True)
+
+        # Make sure we only use the first line
+        subject = tk.render(
+            "mailcraft/emails/reset_password/subject.txt",
+            {"site_title": self.site_title},
+        ).split("\n")[0]
+
+        self.mail_user(user.name, subject, body, body_html=body_html)
+
+    def create_reset_key(self, user: model.User):
+        user.reset_key = self.make_key()
+        model.repo.commit_and_remove()
+
+    def make_key(self):
+        return codecs.encode(os.urandom(16), "hex").decode()
+
+    def get_reset_link_body(self, user: model.User, html: bool = False) -> str:
+        extra_vars = {
+            "reset_link": self.get_reset_link(user),
+            "site_title": self.site_title,
+            "site_url": self.site_url,
+            "user_name": user.name,
+        }
+
+        return tk.render(
+            (
+                "mailcraft/emails/reset_password/body.html"
+                if html
+                else "mailcraft/emails/reset_password/body.txt"
+            ),
+            extra_vars,
+        )
+
+    def get_reset_link(self, user: model.User) -> str:
+        return tk.url_for(
+            "user.perform_reset", id=user.id, key=user.reset_key, qualified=True
         )
