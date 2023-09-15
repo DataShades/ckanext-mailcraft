@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from typing import Union
+
+from flask import Blueprint
+
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 from ckan.common import CKANConfig
@@ -11,14 +15,16 @@ import ckanext.mailcraft.config as mc_config
 from ckanext.mailcraft.mailer import DefaultMailer
 
 
-@toolkit.blanket.blueprints
 @toolkit.blanket.actions
 @toolkit.blanket.auth_functions
 @toolkit.blanket.validators
 class MailcraftPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IConfigurable)
-    plugins.implements(IAdminPanel, inherit=True)
+
+    if plugins.plugin_loaded("admin_panel"):
+        plugins.implements(plugins.IBlueprint)
+        plugins.implements(IAdminPanel, inherit=True)
 
     # IConfigurer
 
@@ -33,6 +39,13 @@ class MailcraftPlugin(plugins.SingletonPlugin):
         if mc_config.is_startup_conn_test_enabled():
             mailer = DefaultMailer()
             mailer.test_conn()
+
+    # IBlueprint
+
+    def get_blueprint(self) -> Union[list[Blueprint], Blueprint]:
+        from ckanext.mailcraft.views import get_blueprints
+
+        return get_blueprints()
 
     # IAdminPanel
 
