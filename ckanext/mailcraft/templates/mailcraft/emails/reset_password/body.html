@@ -1,0 +1,17 @@
+{% extends "mailcraft/emails/base.html" %}
+
+{% block main_text %}
+
+{% trans %}
+<p>Dear {{ user_name }},</p>
+
+<p>You have requested your password on {{ site_title }} to be reset.</p>
+
+<p>Please click the following link to confirm this request:</p>
+
+<p>{{ reset_link }}</p>
+
+<p>Have a nice day.</p>
+{% endtrans %}
+
+{% endblock %}

@@ -16,7 +16,7 @@ from ckan.common import config
 
 
 class MailerBase(object):
-    def mime_encode(self, msg, recipient_name, subtype='plain'):
+    def mime_encode(self, msg, recipient_name, subtype="plain"):
         text = MIMEText(msg.encode("utf-8"), subtype, "utf-8")
         encoded_body = text.get_payload().strip()
         return encoded_body
@@ -63,7 +63,7 @@ class TestMailer(MailerBase):
         )
         assert expected_body in msg[3]
 
-    @pytest.mark.ckan_config('ckan.hide_version', True)
+    @pytest.mark.ckan_config("ckan.hide_version", True)
     def test_mail_recipient_hiding_mailer(self, mail_server):
         user = factories.User()
 
@@ -89,9 +89,8 @@ class TestMailer(MailerBase):
         assert list(test_email["headers"].keys())[0] in msg[3], msg[3]
         assert list(test_email["headers"].values())[0] in msg[3], msg[3]
         assert test_email["subject"] in msg[3], msg[3]
-        assert msg[3].startswith('Content-Type: text/plain'), msg[3]
-        assert "X-Mailer" not in msg[3], \
-            "Should have skipped X-Mailer header"
+        assert msg[3].startswith("Content-Type: text/plain"), msg[3]
+        assert "X-Mailer" not in msg[3], "Should have skipped X-Mailer header"
         expected_body = self.mime_encode(
             test_email["body"], test_email["recipient_name"]
         )
@@ -109,7 +108,7 @@ class TestMailer(MailerBase):
             "recipient_email": user["email"],
             "subject": "Meeting",
             "body": "The meeting is cancelled.\n",
-            "body_html": "The <a href=\"meeting\">meeting</a> is cancelled.\n",
+            "body_html": 'The <a href="meeting">meeting</a> is cancelled.\n',
             "headers": {"header1": "value1"},
         }
         mailer.mail_recipient(**test_email)
@@ -123,20 +122,17 @@ class TestMailer(MailerBase):
         assert list(test_email["headers"].keys())[0] in msg[3], msg[3]
         assert list(test_email["headers"].values())[0] in msg[3], msg[3]
         assert test_email["subject"] in msg[3], msg[3]
-        assert 'Content-Type: multipart' in msg[3]
+        assert "Content-Type: multipart" in msg[3]
         expected_plain_body = self.mime_encode(
-            test_email["body"], test_email["recipient_name"],
-            subtype='plain'
+            test_email["body"], test_email["recipient_name"], subtype="plain"
         )
         assert expected_plain_body in msg[3]
         expected_html_body = self.mime_encode(
-            test_email["body_html"], test_email["recipient_name"],
-            subtype='html'
+            test_email["body_html"], test_email["recipient_name"], subtype="html"
         )
         assert expected_html_body in msg[3]
 
     def test_mail_user(self, mail_server):
-
         user = factories.User()
         user_obj = model.User.by_name(user["name"])
 
@@ -182,7 +178,6 @@ class TestMailer(MailerBase):
 
     @pytest.mark.ckan_config("ckan.site_title", "My CKAN instance")
     def test_from_field_format(self, mail_server):
-
         msgs = mail_server.get_smtp_messages()
         assert msgs == []
 
@@ -200,10 +195,9 @@ class TestMailer(MailerBase):
         msgs = mail_server.get_smtp_messages()
         msg = msgs[0]
 
-        expected_from_header = email.utils.formataddr((
-            config.get("ckan.site_title"),
-            config.get("smtp.mail_from")
-        ))
+        expected_from_header = email.utils.formataddr(
+            (config.get("ckan.site_title"), config.get("smtp.mail_from"))
+        )
 
         assert expected_from_header in msg[3]
 
@@ -222,7 +216,7 @@ class TestMailer(MailerBase):
         assert msg[2] == [user["email"]]
         assert "Reset" in msg[3], msg[3]
         test_msg = mailer.get_reset_link_body(user_obj)
-        expected_body = self.mime_encode(test_msg + '\n', user["name"])
+        expected_body = self.mime_encode(test_msg + "\n", user["name"])
 
         assert expected_body in msg[3]
 
@@ -242,7 +236,7 @@ class TestMailer(MailerBase):
         assert msg[1] == config["smtp.mail_from"]
         assert msg[2] == [user["email"]]
         test_msg = mailer.get_invite_body(user_obj)
-        expected_body = self.mime_encode(test_msg + '\n', user["name"])
+        expected_body = self.mime_encode(test_msg + "\n", user["name"])
 
         assert expected_body in msg[3]
         assert user_obj.reset_key is not None, user
@@ -297,7 +291,6 @@ class TestMailer(MailerBase):
 
     @pytest.mark.ckan_config("smtp.reply_to", "norply@ckan.org")
     def test_reply_to(self, mail_server):
-
         msgs = mail_server.get_smtp_messages()
         assert msgs == []
 
@@ -315,15 +308,12 @@ class TestMailer(MailerBase):
         msgs = mail_server.get_smtp_messages()
         msg = msgs[0]
 
-        expected_from_header = "Reply-to: {}".format(
-            config.get("smtp.reply_to")
-        )
+        expected_from_header = "Reply-to: {}".format(config.get("smtp.reply_to"))
 
         assert expected_from_header in msg[3]
 
     @pytest.mark.ckan_config("smtp.reply_to", "norply@ckan.org")
     def test_reply_to_ext_headers_overwrite(self, mail_server):
-
         msgs = mail_server.get_smtp_messages()
         assert msgs == []
 
@@ -341,12 +331,11 @@ class TestMailer(MailerBase):
         msgs = mail_server.get_smtp_messages()
         msg = msgs[0]
 
-        expected_from_header = 'Reply-to: norply@ckanext.org'
+        expected_from_header = "Reply-to: norply@ckanext.org"
 
         assert expected_from_header in msg[3]
 
     def test_mail_user_with_attachments(self, mail_server):
-
         user = factories.User()
         user_obj = model.User.by_name(user["name"])
 
@@ -360,9 +349,9 @@ class TestMailer(MailerBase):
             "body": "The meeting is cancelled.\n",
             "headers": {"header1": "value1"},
             "attachments": [
-                ("strategy.pdf", io.BytesIO(b'Some fake pdf'), 'application/pdf'),
-                ("goals.png", io.BytesIO(b'Some fake png'), 'image/png'),
-            ]
+                ("strategy.pdf", io.BytesIO(b"Some fake pdf"), "application/pdf"),
+                ("goals.png", io.BytesIO(b"Some fake png"), "image/png"),
+            ],
         }
         mailer.mail_user(**test_email)
 
@@ -377,13 +366,16 @@ class TestMailer(MailerBase):
         assert test_email["subject"] in msg[3], msg[3]
 
         for item in [
-            "strategy.pdf", base64.b64encode(b'Some fake pdf').decode(), "application/pdf",
-            "goals.png", base64.b64encode(b'Some fake png').decode(), "image/png",
+            "strategy.pdf",
+            base64.b64encode(b"Some fake pdf").decode(),
+            "application/pdf",
+            "goals.png",
+            base64.b64encode(b"Some fake png").decode(),
+            "image/png",
         ]:
             assert item in msg[3]
 
     def test_mail_user_with_attachments_no_media_type_provided(self, mail_server):
-
         user = factories.User()
         user_obj = model.User.by_name(user["name"])
 
@@ -397,9 +389,9 @@ class TestMailer(MailerBase):
             "body": "The meeting is cancelled.\n",
             "headers": {"header1": "value1"},
             "attachments": [
-                ("strategy.pdf", io.BytesIO(b'Some fake pdf')),
-                ("goals.png", io.BytesIO(b'Some fake png')),
-            ]
+                ("strategy.pdf", io.BytesIO(b"Some fake pdf")),
+                ("goals.png", io.BytesIO(b"Some fake png")),
+            ],
         }
         mailer.mail_user(**test_email)
 
@@ -409,7 +401,9 @@ class TestMailer(MailerBase):
         msg = msgs[0]
 
         for item in [
-            "strategy.pdf", "application/pdf",
-            "goals.png", "image/png",
+            "strategy.pdf",
+            "application/pdf",
+            "goals.png",
+            "image/png",
         ]:
             assert item in msg[3]

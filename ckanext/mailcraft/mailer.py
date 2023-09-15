@@ -27,8 +27,9 @@ from ckanext.mailcraft.types import (
 log = logging.getLogger(__name__)
 
 
-class AbstractMailer(ABC):
+class Mailer(ABC):
     def __init__(self):
+        # TODO: replace with ext config, instead of using core ones
         self.server = tk.config["smtp.server"]
         self.start_tls = tk.config["smtp.starttls"]
         self.user = tk.config["smtp.user"]
@@ -81,8 +82,16 @@ class AbstractMailer(ABC):
     def send_reset_link(self, user: model.User) -> None:
         pass
 
+    @abstractmethod
+    def create_reset_key(self, user: model.User) -> None:
+        pass
 
-class DefaultMailer(AbstractMailer):
+    @abstractmethod
+    def verify_reset_link(self, user: model.User, key: Optional[str]) -> bool:
+        pass
+
+
+class DefaultMailer(Mailer):
     def mail_recipients(
         self,
         subject: str,
@@ -120,7 +129,6 @@ class DefaultMailer(AbstractMailer):
             self.add_attachments(msg, attachments)
 
         try:
-            # print(msg.get_body(("html",)).get_content())  # type: ignore
             if mc_config.stop_outgoing_emails():
                 self._save_email(
                     msg, body_html, mc_model.Email.State.stopped, dict(msg.items())
@@ -246,8 +254,8 @@ class DefaultMailer(AbstractMailer):
     def send_reset_link(self, user: model.User) -> None:
         self.create_reset_key(user)
 
-        body = self.get_reset_link_body(user)
-        body_html = self.get_reset_link_body(user, html=True)
+        body = self._get_reset_link_body(user)
+        body_html = self._get_reset_link_body(user, html=True)
 
         # Make sure we only use the first line
         subject = tk.render(
@@ -258,15 +266,14 @@ class DefaultMailer(AbstractMailer):
         self.mail_user(user.name, subject, body, body_html=body_html)
 
     def create_reset_key(self, user: model.User):
-        user.reset_key = self.make_key()
+        user.reset_key = codecs.encode(os.urandom(16), "hex").decode()
         model.repo.commit_and_remove()
 
-    def make_key(self):
-        return codecs.encode(os.urandom(16), "hex").decode()
-
-    def get_reset_link_body(self, user: model.User, html: bool = False) -> str:
+    def _get_reset_link_body(self, user: model.User, html: bool = False) -> str:
         extra_vars = {
-            "reset_link": self.get_reset_link(user),
+            "reset_link": tk.url_for(
+                "user.perform_reset", id=user.id, key=user.reset_key, qualified=True
+            ),
             "site_title": self.site_title,
             "site_url": self.site_url,
             "user_name": user.name,
@@ -281,7 +288,8 @@ class DefaultMailer(AbstractMailer):
             extra_vars,
         )
 
-    def get_reset_link(self, user: model.User) -> str:
-        return tk.url_for(
-            "user.perform_reset", id=user.id, key=user.reset_key, qualified=True
-        )
+    def verify_reset_link(self, user: model.User, key: Optional[str]) -> bool:
+        if not key or not user.reset_key or len(user.reset_key) < 5:
+            return False
+
+        return key.strip() == user.reset_key
