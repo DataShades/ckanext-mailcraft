@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import ckan.plugins.toolkit as tk
 import ckan.types as types
@@ -19,17 +19,6 @@ mailcraft.before_request(ap_before_request)
 
 class DashboardView(MethodView):
     def get(self) -> str:
-        from ckanext.mailcraft.mailer import DefaultMailer
-        mailer = DefaultMailer()
-        mailer.mail_recipients(
-            subject="Hello world",
-            recipients=["mutantsan@gmail.com", "kvaqich@gmail.com"],
-            body="Hello world",
-            body_html=tk.render("mailcraft/emails/test.html", extra_vars={
-                "site_url": mailer.site_url,
-                "site_title": mailer.site_title
-            }),
-        )
         return tk.render(
             "mailcraft/dashboard.html",
             extra_vars={
@@ -124,10 +113,6 @@ class DashboardView(MethodView):
         return tk.redirect_to("mailcraft.dashboard")
 
 
-        if "clear_logs" in tk.request.form:
-            ApLogs.clear_logs()
-            tk.h.flash_success(tk._("Logs have been cleared."))
-
 class ConfigView(MethodView):
     def get(self) -> str:
         return tk.render("mailcraft/dashboard.html")
@@ -147,10 +132,13 @@ class MailReadView(MethodView):
 
 
 def _build_context() -> types.Context:
-    return {
-        "user": tk.current_user.name,
-        "auth_user_obj": tk.current_user,
-    }
+    return cast(
+        types.Context,
+        {
+            "user": tk.current_user.name,
+            "auth_user_obj": tk.current_user,
+        },
+    )
 
 
 mailcraft.add_url_rule("/config", view_func=ConfigView.as_view("config"))
