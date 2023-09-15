@@ -12,6 +12,9 @@ DEF_STOP_OUTGOING = False
 CONF_MAIL_PER_PAGE = "ckanext.mailcraft.mail_per_page"
 DEF_MAIL_PER_PAGE = 20
 
+CONF_SAVE_TO_DASHBOARD = "ckanext.mailcraft.save_to_dashboard"
+DEF_SAVE_TO_DASHBOARD = False
+
 
 def get_conn_timeout() -> int:
     """Return a timeout for an SMTP connection"""
@@ -33,3 +36,8 @@ def stop_outgoing_emails() -> bool:
 def get_mail_per_page() -> int:
     """Return a number of mails to show per page"""
     return tk.asint(tk.config.get(CONF_MAIL_PER_PAGE, DEF_MAIL_PER_PAGE))
+
+
+def is_save_to_dashboard_enabled() -> bool:
+    """Check if we are saving outgoing emails to dashboard"""
+    return tk.asbool(tk.config.get(CONF_SAVE_TO_DASHBOARD, DEF_SAVE_TO_DASHBOARD))

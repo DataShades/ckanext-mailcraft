@@ -90,6 +90,18 @@ class Mailer(ABC):
     def verify_reset_link(self, user: model.User, key: Optional[str]) -> bool:
         pass
 
+    def save_to_dashboard(
+        self,
+        msg: EmailMessage,
+        body_html: str,
+        state: str = mc_model.Email.State.success,
+        extras: Optional[dict[str, Any]] = None,
+    ) -> None:
+        if not mc_config.is_save_to_dashboard_enabled():
+            return
+
+        mc_model.Email.save_mail(msg, body_html, state, extras or {})
+
 
 class DefaultMailer(Mailer):
     def mail_recipients(
@@ -130,18 +142,18 @@ class DefaultMailer(Mailer):
 
         try:
             if mc_config.stop_outgoing_emails():
-                self._save_email(
+                self.save_to_dashboard(
                     msg, body_html, mc_model.Email.State.stopped, dict(msg.items())
                 )
             else:
                 self._send_email(recipients, msg)
         except MailerException:
-            self._save_email(
+            self.save_to_dashboard(
                 msg, body_html, mc_model.Email.State.failed, dict(msg.items())
             )
         else:
             if not mc_config.stop_outgoing_emails():
-                self._save_email(msg, body_html)
+                self.save_to_dashboard(msg, body_html)
 
     def add_attachments(self, msg: EmailMessage, attachments) -> None:
         """Add attachments on an email message
@@ -197,15 +209,6 @@ class DefaultMailer(Mailer):
             raise MailerException(f"{e}")
 
         return conn
-
-    def _save_email(
-        self,
-        msg: EmailMessage,
-        body_html: str,
-        state: str = mc_model.Email.State.success,
-        extras: Optional[dict[str, Any]] = None,
-    ) -> None:
-        mc_model.Email.save_mail(msg, body_html, state, extras or {})
 
     def _send_email(self, recipients, msg: EmailMessage):
         conn = self.get_connection()
