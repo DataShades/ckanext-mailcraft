@@ -8,6 +8,10 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 from ckan.common import CKANConfig
 
+if plugins.plugin_loaded("admin_panel"):
+    import ckanext.admin_panel.types as ap_types
+    from ckanext.admin_panel.interfaces import IAdminPanel
+
 import ckanext.mailcraft.config as mc_config
 from ckanext.mailcraft.mailer import DefaultMailer
 
@@ -20,9 +24,6 @@ class MailcraftPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurable)
 
     if plugins.plugin_loaded("admin_panel"):
-        import ckanext.admin_panel.types as ap_types
-        from ckanext.admin_panel.interfaces import IAdminPanel
-
         plugins.implements(plugins.IBlueprint)
         plugins.implements(IAdminPanel, inherit=True)
 
