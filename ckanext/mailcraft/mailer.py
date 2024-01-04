@@ -1,8 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 
-import codecs
-import os
 import logging
 import mimetypes
 import smtplib
@@ -27,9 +25,8 @@ from ckanext.mailcraft.types import (
 log = logging.getLogger(__name__)
 
 
-class Mailer(ABC):
+class BaseMailer(ABC):
     def __init__(self):
-        # TODO: replace with ext config, instead of using core ones
         self.server = tk.config["smtp.server"]
         self.start_tls = tk.config["smtp.starttls"]
         self.user = tk.config["smtp.user"]
@@ -78,32 +75,8 @@ class Mailer(ABC):
     ) -> None:
         pass
 
-    @abstractmethod
-    def send_reset_link(self, user: model.User) -> None:
-        pass
 
-    @abstractmethod
-    def create_reset_key(self, user: model.User) -> None:
-        pass
-
-    @abstractmethod
-    def verify_reset_link(self, user: model.User, key: Optional[str]) -> bool:
-        pass
-
-    def save_to_dashboard(
-        self,
-        msg: EmailMessage,
-        body_html: str,
-        state: str = mc_model.Email.State.success,
-        extras: Optional[dict[str, Any]] = None,
-    ) -> None:
-        if not mc_config.is_save_to_dashboard_enabled():
-            return
-
-        mc_model.Email.save_mail(msg, body_html, state, extras or {})
-
-
-class DefaultMailer(Mailer):
+class DefaultMailer(BaseMailer):
     def mail_recipients(
         self,
         subject: str,
@@ -141,19 +114,20 @@ class DefaultMailer(Mailer):
             self.add_attachments(msg, attachments)
 
         try:
+            # print(msg.get_body(("html",)).get_content())  # type: ignore
             if mc_config.stop_outgoing_emails():
-                self.save_to_dashboard(
+                self._save_email(
                     msg, body_html, mc_model.Email.State.stopped, dict(msg.items())
                 )
             else:
                 self._send_email(recipients, msg)
         except MailerException:
-            self.save_to_dashboard(
+            self._save_email(
                 msg, body_html, mc_model.Email.State.failed, dict(msg.items())
             )
         else:
             if not mc_config.stop_outgoing_emails():
-                self.save_to_dashboard(msg, body_html)
+                self._save_email(msg, body_html)
 
     def add_attachments(self, msg: EmailMessage, attachments) -> None:
         """Add attachments on an email message
@@ -210,6 +184,15 @@ class DefaultMailer(Mailer):
 
         return conn
 
+    def _save_email(
+        self,
+        msg: EmailMessage,
+        body_html: str,
+        state: str = mc_model.Email.State.success,
+        extras: Optional[dict[str, Any]] = None,
+    ) -> None:
+        mc_model.Email.save_mail(msg, body_html, state, extras or {})
+
     def _send_email(self, recipients, msg: EmailMessage):
         conn = self.get_connection()
 
@@ -253,46 +236,3 @@ class DefaultMailer(Mailer):
             headers=headers,
             attachments=attachments,
         )
-
-    def send_reset_link(self, user: model.User) -> None:
-        self.create_reset_key(user)
-
-        body = self._get_reset_link_body(user)
-        body_html = self._get_reset_link_body(user, html=True)
-
-        # Make sure we only use the first line
-        subject = tk.render(
-            "mailcraft/emails/reset_password/subject.txt",
-            {"site_title": self.site_title},
-        ).split("\n")[0]
-
-        self.mail_user(user.name, subject, body, body_html=body_html)
-
-    def create_reset_key(self, user: model.User):
-        user.reset_key = codecs.encode(os.urandom(16), "hex").decode()
-        model.repo.commit_and_remove()
-
-    def _get_reset_link_body(self, user: model.User, html: bool = False) -> str:
-        extra_vars = {
-            "reset_link": tk.url_for(
-                "user.perform_reset", id=user.id, key=user.reset_key, qualified=True
-            ),
-            "site_title": self.site_title,
-            "site_url": self.site_url,
-            "user_name": user.name,
-        }
-
-        return tk.render(
-            (
-                "mailcraft/emails/reset_password/body.html"
-                if html
-                else "mailcraft/emails/reset_password/body.txt"
-            ),
-            extra_vars,
-        )
-
-    def verify_reset_link(self, user: model.User, key: Optional[str]) -> bool:
-        if not key or not user.reset_key or len(user.reset_key) < 5:
-            return False
-
-        return key.strip() == user.reset_key

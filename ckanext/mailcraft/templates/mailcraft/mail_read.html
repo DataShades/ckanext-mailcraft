@@ -12,7 +12,7 @@
 {% block ap_content %}
     {% if mail.extras %}
         <div class="mailcraft-mail-meta">
-            <h3>{{ _("Email headers") }}</h3>
+            <h3>{{ _("Email meta") }}</h3>
             <ul>
                 {% for key, value in mail.extras.items() %}
                     <li><b>{{ key }}</b>: {{ value }}</li>

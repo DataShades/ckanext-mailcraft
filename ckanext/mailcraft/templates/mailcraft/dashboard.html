@@ -10,6 +10,8 @@
 {% block ap_content %}
     <h1>{{ _("Dashboard") }}</h1>
 
+    <a href="{{ h.url_for('mailcraft.test') }}" class="btn btn-primary mb-3">{{ _("Send test email") }}</a>
+
     <div class="row g-3">
         <form action="{{ h.url_for('mailcraft.dashboard') }}" method="POST">
             {{ h.csrf_input() }}
