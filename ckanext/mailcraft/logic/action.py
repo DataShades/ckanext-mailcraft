@@ -47,3 +47,12 @@ def mc_mail_delete(context, data_dict):
     context["session"].commit()
 
     return True
+
+
+def mc_mail_clear(context, data_dict):
+    """Clear all stored mails"""
+    tk.check_access("mc_mail_delete", context, data_dict)
+
+    emails_deleted = mc_model.Email.clear_emails()
+
+    return {"deleted": emails_deleted}

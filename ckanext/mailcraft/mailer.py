@@ -20,6 +20,7 @@ from ckanext.mailcraft.types import (
     Attachment,
     AttachmentWithoutType,
     AttachmentWithType,
+    EmailData,
 )
 
 log = logging.getLogger(__name__)
@@ -38,6 +39,8 @@ class BaseMailer(ABC):
         self.site_url = tk.config["ckan.site_url"]
 
         self.conn_timeout = mc_config.get_conn_timeout()
+        self.stop_outgoing = mc_config.stop_outgoing_emails()
+        self.redirect_to = mc_config.get_redirect_email()
 
     @abstractmethod
     def mail_recipients(
@@ -113,21 +116,23 @@ class DefaultMailer(BaseMailer):
         if attachments:
             self.add_attachments(msg, attachments)
 
+        email_data: EmailData = dict(msg.items())  # type: ignore
+
         try:
-            # print(msg.get_body(("html",)).get_content())  # type: ignore
-            if mc_config.stop_outgoing_emails():
-                self._save_email(
-                    msg, body_html, mc_model.Email.State.stopped, dict(msg.items())
-                )
+            if self.stop_outgoing:
+                self._save_email(email_data, body_html, mc_model.Email.State.stopped)
             else:
+                if recipient := mc_config.get_redirect_email():
+                    email_data["redirected_from"] = recipients
+                    recipients = [recipient]
+                    email_data["To"] = email_data["Bcc"] = ", ".join(recipients)
+
                 self._send_email(recipients, msg)
         except MailerException:
-            self._save_email(
-                msg, body_html, mc_model.Email.State.failed, dict(msg.items())
-            )
+            self._save_email(email_data, body_html, mc_model.Email.State.failed)
         else:
-            if not mc_config.stop_outgoing_emails():
-                self._save_email(msg, body_html)
+            if not self.stop_outgoing:
+                self._save_email(email_data, body_html)
 
     def add_attachments(self, msg: EmailMessage, attachments) -> None:
         """Add attachments on an email message
@@ -186,12 +191,11 @@ class DefaultMailer(BaseMailer):
 
     def _save_email(
         self,
-        msg: EmailMessage,
+        email_data: EmailData,
         body_html: str,
         state: str = mc_model.Email.State.success,
-        extras: Optional[dict[str, Any]] = None,
     ) -> None:
-        mc_model.Email.save_mail(msg, body_html, state, extras or {})
+        mc_model.Email.save_mail(email_data, body_html, state)
 
     def _send_email(self, recipients, msg: EmailMessage):
         conn = self.get_connection()

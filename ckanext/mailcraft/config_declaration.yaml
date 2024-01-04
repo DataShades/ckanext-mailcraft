@@ -22,7 +22,5 @@ groups:
         description: Specify a number of mails to show per page on a dashboard
         default: 20
 
-      - key: ckanext.mailcraft.save_to_dashboard
-        type: bool
-        description: Specify do we need to save outgoing emails to dashboard
-        default: false
+      - key: ckanext.mailcraft.redirect_emails_to
+        description: Redirect outgoing emails to a specified email

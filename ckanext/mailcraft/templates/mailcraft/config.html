@@ -13,7 +13,7 @@
     <form method="POST">
         {% for _, config in configs.items() %}
             {% if config.type == "select" %}
-                {{ form.select(config.key, label=config.label, options=config.options, selected=data[config.key] | o if data else config.value, error=errors[config.key]) }}
+                {{ form.select(config.key, label=config.label, options=config.options, selected=data[config.key] | int if data else config.value, error=errors[config.key]) }}
             {% elif config.type in ("text", "number") %}
                 {{ form.input(config.key, label=config.label, value=data[config.key] if data else config.value, error=errors[config.key], type=config.type) }}
             {% else %}

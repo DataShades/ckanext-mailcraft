@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any
-from email.message import EmailMessage
 
 from sqlalchemy import Column, DateTime, Integer, Text
 from sqlalchemy.orm import Query
@@ -13,6 +12,8 @@ from typing_extensions import Self
 
 import ckan.model as model
 from ckan.plugins import toolkit as tk
+
+from ckanext.mailcraft.types import EmailData
 
 log = logging.getLogger(__name__)
 
@@ -43,16 +44,19 @@ class Email(tk.BaseModel):
 
     @classmethod
     def save_mail(
-        cls, msg: EmailMessage, body_html: str, state: str, extras: dict[str, Any]
+        cls,
+        email_data: EmailData,
+        body_html: str,
+        state: str,
     ) -> Email:
         mail = cls(
-            subject=msg["Subject"],
-            timestamp=msg["Date"],
-            sender=msg["From"],
-            recipient=msg["To"],
+            subject=email_data["Subject"],
+            timestamp=email_data["Date"],
+            sender=email_data["From"],
+            recipient=email_data["To"],
             message=body_html,
             state=state,
-            extras=extras,
+            extras=email_data,
         )
 
         model.Session.add(mail)
