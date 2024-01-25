@@ -15,6 +15,7 @@ from ckanext.mailcraft.mailer import DefaultMailer
 @toolkit.blanket.actions
 @toolkit.blanket.auth_functions
 @toolkit.blanket.validators
+@toolkit.blanket.config_declarations
 class MailcraftPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IConfigurable)
