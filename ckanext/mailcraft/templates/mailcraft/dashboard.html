@@ -1,8 +1,5 @@
 {% extends 'admin_panel/base.html' %}
 
-{% import 'macros/autoform.html' as autoform %}
-{% import 'macros/form.html' as form %}
-
 {% block breadcrumb_content %}
     <li class="active">{% link_for _("Dashboard"), named_route='mailcraft.dashboard' %}</li>
 {% endblock breadcrumb_content %}
@@ -13,37 +10,10 @@
     <a href="{{ h.url_for('mailcraft.test') }}" class="btn btn-primary mb-3">{{ _("Send test email") }}</a>
 
     <div class="row g-3">
-        <form action="{{ h.url_for('mailcraft.dashboard') }}" method="POST">
-            {{ h.csrf_input() }}
-
-            {% if page.items %}
-                <div class="bulk-actions mb-3">
-                    {{ form.select('bulk-action', id='bulk-action', label=_('Action'), options=bulk_options, selected="", error=error) }}
-
-                    <button type="submit" id="bulk-submit" class="btn btn-primary me-2">
-                        {{ _("Apply to selected items") }}
-                    </button>
-
-                    <button
-                        id="clear-mails-btn"
-                        name="clear_mails"
-                        type="submit"
-                        class="btn btn-danger"
-                        data-module="ap-confirm-action"
-                        data-module-content="{{ _('Are you sure you want to clear all mails?') }}"
-                        data-module-with-data=true>
-                        {{ _("Clear mails") }}
-                    </button>
-                </div>
-
-                {% snippet "admin_panel/config/snippets/sortable_table.html", items=page.items, columns=columns, order_by=order_by, sort=sort, bulk_check=1 %}
-            {% else %}
-                <p>{{ _("No mails found.") }}</p>
-            {% endif %}
-        </form>
+        {% if collection.data.total  %}
+            {{ collection.serializer.render() | safe }}
+        {% else %}
+            <p>{{ _("No mails found.") }}</p>
+        {% endif %}
     </div> <!-- row -->
 {% endblock ap_content %}
-
-{% block page_pagination %}
-    {{ page.pager() }}
-{% endblock %}

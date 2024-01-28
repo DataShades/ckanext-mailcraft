@@ -13,6 +13,7 @@ from ckan.logic import parse_params
 from ckanext.ap_main.utils import ap_before_request
 
 import ckanext.mailcraft.config as mc_config
+from ckanext.collection.shared import get_collection
 
 mailcraft = Blueprint("mailcraft", __name__, url_prefix="/admin-panel/mailcraft")
 mailcraft.before_request(ap_before_request)
@@ -23,56 +24,11 @@ class DashboardView(MethodView):
         return tk.render(
             "mailcraft/dashboard.html",
             extra_vars={
-                "page": self._get_pager(
-                    tk.get_action("mc_mail_list")(_build_context(), {})
+                "collection": get_collection(
+                    "mailcraft-dashboard", parse_params(tk.request.args)
                 ),
-                "columns": self._get_table_columns(),
-                "bulk_options": self._get_bulk_options(),
             },
         )
-
-    def _get_pager(self, mailcraft_list: list[dict[str, Any]]) -> Page:
-        return Page(
-            collection=mailcraft_list,
-            page=tk.h.get_page_number(tk.request.args),
-            url=tk.h.pager_url,
-            item_count=len(mailcraft_list),
-            items_per_page=mc_config.get_mail_per_page(),
-        )
-
-    def _get_table_columns(self) -> list[dict[str, Any]]:
-        return [
-            tk.h.ap_table_column("id", sortable=False, width="5%"),
-            tk.h.ap_table_column("subject", sortable=False, width="10%"),
-            tk.h.ap_table_column("sender", sortable=False, width="10%"),
-            tk.h.ap_table_column("recipient", sortable=False, width="20%"),
-            tk.h.ap_table_column("state", sortable=False, width="5%"),
-            tk.h.ap_table_column(
-                "timestamp", column_renderer="ap_date", sortable=False, width="10%"
-            ),
-            tk.h.ap_table_column(
-                "actions",
-                sortable=False,
-                width="10%",
-                column_renderer="ap_action_render",
-                actions=[
-                    tk.h.ap_table_action(
-                        "mailcraft.mail_read",
-                        label=tk._("View"),
-                        params={"mail_id": "$id"},
-                        attributes={"class": "btn btn-primary"},
-                    )
-                ],
-            ),
-        ]
-
-    def _get_bulk_options(self):
-        return [
-            {
-                "value": "1",
-                "text": tk._("Remove selected mails"),
-            },
-        ]
 
     def _get_bulk_actions(self, value: str) -> Callable[[list[str]], bool] | None:
         return {"1": self._remove_emails}.get(value)
@@ -173,10 +129,10 @@ def send_test_email() -> Response:
         subject="Hello world",
         recipients=["kvaqich@gmail.com"],
         body="Hello world",
-        body_html=tk.render("mailcraft/emails/test.html", extra_vars={
-            "site_url": mailer.site_url,
-            "site_title": mailer.site_title
-        }),
+        body_html=tk.render(
+            "mailcraft/emails/test.html",
+            extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
+        ),
     )
     tk.h.flash_success(tk._("Test email has been sent"))
 
