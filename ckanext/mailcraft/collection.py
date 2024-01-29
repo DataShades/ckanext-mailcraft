@@ -1,16 +1,15 @@
 from __future__ import annotations
 
+from typing import Any
+
 import sqlalchemy as sa
 from dominate import tags
-from typing import Any
-import ckan.plugins.toolkit as tk
-from ckanext.collection.types import (
-    InputFilter,
-    LinkFilter,
-)
-from ckanext.collection.utils import Filters, ModelData
 
+import ckan.plugins.toolkit as tk
+
+from ckanext.collection.utils import Filters, ModelData
 from ckanext.collection.types import InputFilter, LinkFilter, SelectFilter
+
 from ckanext.ap_main.collection.base import (
     ApCollection,
     BulkAction,
