@@ -6,9 +6,10 @@ from ckan.common import CKANConfig
 
 import ckanext.ap_main.types as ap_types
 from ckanext.ap_main.interfaces import IAdminPanel
-
+from ckanext.collection.interfaces import ICollection, CollectionFactory
 import ckanext.mailcraft.config as mc_config
 from ckanext.mailcraft.mailer import DefaultMailer
+from ckanext.mailcraft.collection import MailCollection
 
 
 @toolkit.blanket.blueprints
@@ -20,6 +21,7 @@ class MailcraftPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IConfigurable)
     plugins.implements(IAdminPanel, inherit=True)
+    plugins.implements(ICollection, inherit=True)
 
     # IConfigurer
 
@@ -28,7 +30,7 @@ class MailcraftPlugin(plugins.SingletonPlugin):
         toolkit.add_public_directory(config_, "public")
         toolkit.add_resource("assets", "mailcraft")
 
-    def update_config_schema(self, schema):
+    def _update_config_schema(self, schema):
         for _, config in mc_config.get_config_options().items():
             schema.update({config["key"]: config["validators"]})
 
@@ -40,6 +42,13 @@ class MailcraftPlugin(plugins.SingletonPlugin):
         if mc_config.is_startup_conn_test_enabled():
             mailer = DefaultMailer()
             mailer.test_conn()
+
+    # ICollection
+
+    def get_collection_factories(self) -> dict[str, CollectionFactory]:
+        return {
+            "mailcraft-dashboard": MailCollection,
+        }
 
     # IAdminPanel
 
