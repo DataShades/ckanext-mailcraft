@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 import sqlalchemy as sa
 from dominate import tags
 
@@ -20,7 +18,7 @@ from ckanext.ap_main.collection.base import (
 from ckanext.mailcraft.model import Email
 
 
-class MailCollection(ApCollection[Any]):
+class MailCollection(ApCollection):
     ColumnsFactory = ApCollection.ColumnsFactory.with_attributes(
         names=[
             "bulk-action",
