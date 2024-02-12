@@ -1,12 +1,10 @@
 from __future__ import annotations
 
+import ckan.types as types
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 from ckan.common import CKANConfig
 
-import ckanext.ap_main.types as ap_types
-from ckanext.ap_main.interfaces import IAdminPanel
-from ckanext.collection.interfaces import ICollection, CollectionFactory
 import ckanext.mailcraft.config as mc_config
 from ckanext.mailcraft.mailer import DefaultMailer
 from ckanext.mailcraft.collection import MailCollection
@@ -20,8 +18,21 @@ from ckanext.mailcraft.collection import MailCollection
 class MailcraftPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IConfigurable)
-    plugins.implements(IAdminPanel, inherit=True)
-    plugins.implements(ICollection, inherit=True)
+    plugins.implements(plugins.ISignal)
+
+    try:
+        from ckanext.collection.interfaces import ICollection, CollectionFactory
+    except ImportError:
+        pass
+    else:
+        plugins.implements(ICollection, inherit=True)
+
+        # ICollection
+
+        def get_collection_factories(self) -> dict[str, CollectionFactory]:
+            return {
+                "mailcraft-dashboard": MailCollection,
+            }
 
     # IConfigurer
 
@@ -43,33 +54,29 @@ class MailcraftPlugin(plugins.SingletonPlugin):
             mailer = DefaultMailer()
             mailer.test_conn()
 
-    # ICollection
+    # ISignal
 
-    def get_collection_factories(self) -> dict[str, CollectionFactory]:
+    def get_signal_subscriptions(self) -> types.SignalMapping:
         return {
-            "mailcraft-dashboard": MailCollection,
+            toolkit.signals.ckanext.signal("ap_main:collect_config_sections"): [
+                collect_config_sections_subs
+            ],
         }
 
-    # IAdminPanel
 
-    def register_config_sections(
-        self, config_list: list[ap_types.SectionConfig]
-    ) -> list[ap_types.SectionConfig]:
-        config_list.append(
-            ap_types.SectionConfig(
-                name="Mailcraft",
-                configs=[
-                    ap_types.ConfigurationItem(
-                        name="Global settings",
-                        blueprint="mailcraft.config",
-                        info="Global mailcraft configurations",
-                    ),
-                    ap_types.ConfigurationItem(
-                        name="Dashboard",
-                        blueprint="mailcraft.dashboard",
-                        info="Mailcraft dashboard",
-                    ),
-                ],
-            )
-        )
-        return config_list
+def collect_config_sections_subs(sender: None):
+    return {
+        "name": "Mailcraft",
+        "configs": [
+            {
+                "name": "Global settings",
+                "blueprint": "mailcraft.config",
+                "info": "Global mailcraft configurations",
+            },
+            {
+                "name": "Dashboard",
+                "blueprint": "mailcraft.dashboard",
+                "info": "Mailcraft dashboard",
+            },
+        ],
+    }
