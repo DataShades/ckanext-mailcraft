@@ -1,12 +1,10 @@
-from typing import Type
-
 import ckan.plugins as p
 
-from ckanext.mailcraft.mailer import Mailer, DefaultMailer
+from ckanext.mailcraft.mailer import DefaultMailer
 from ckanext.mailcraft.interfaces import IMailCraft
 
 
-def get_mailer() -> Mailer:
+def get_mailer() -> DefaultMailer:
     mailer = DefaultMailer
 
     for plugin in reversed(list(p.PluginImplementations(IMailCraft))):
