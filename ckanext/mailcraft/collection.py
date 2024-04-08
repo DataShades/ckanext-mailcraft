@@ -131,7 +131,7 @@ class MailCollection(ApCollection):
                 type="link",
                 options={
                     "label": "Clear",
-                    "endpoint": "ap_report.logs",
+                    "endpoint": "ap_log.list",
                     "kwargs": {},
                 },
             ),
