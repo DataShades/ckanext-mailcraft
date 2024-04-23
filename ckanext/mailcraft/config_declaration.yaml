@@ -6,21 +6,26 @@ groups:
         type: bool
         description: Specify do we want to check an SMTP conn on CKAN startup
         default: false
+        editable: true
 
       - key: ckanext.mailcraft.conn_timeout
         type: int
         description: Specify a timeout for an SMTP connection
         default: 10
+        editable: true
 
       - key: ckanext.mailcraft.stop_outgoing_emails
         type: bool
         description: Specify if we are stopping outgoing emails. In this case, we are only saving it to dashboard
         default: false
+        editable: true
 
       - key: ckanext.mailcraft.mail_per_page
         type: int
         description: Specify a number of mails to show per page on a dashboard
         default: 20
+        editable: true
 
       - key: ckanext.mailcraft.redirect_emails_to
         description: Redirect outgoing emails to a specified email
+        editable: true

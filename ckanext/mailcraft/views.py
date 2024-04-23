@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Callable
 
 from flask import Blueprint, Response
 from flask.views import MethodView
 
 import ckan.plugins.toolkit as tk
 import ckan.types as types
-from ckan.lib.helpers import Page
 from ckan.logic import parse_params
 
 from ckanext.ap_main.utils import ap_before_request
+from ckanext.ap_main.views.generics import ApConfigurationPageView
+
+from ckanext.collection.shared import get_collection
 
 import ckanext.mailcraft.config as mc_config
-from ckanext.collection.shared import get_collection
+from ckanext.mailcraft.utils import get_mailer
 
 mailcraft = Blueprint("mailcraft", __name__, url_prefix="/admin-panel/mailcraft")
 mailcraft.before_request(ap_before_request)
@@ -70,40 +72,6 @@ class DashboardView(MethodView):
         return tk.redirect_to("mailcraft.dashboard")
 
 
-class ConfigView(MethodView):
-    def get(self) -> str:
-        return tk.render(
-            "mailcraft/config.html",
-            extra_vars={
-                "data": {},
-                "errors": {},
-                "configs": mc_config.get_config_options(),
-            },
-        )
-
-    def post(self) -> str:
-        data_dict = parse_params(tk.request.form)
-
-        try:
-            tk.get_action("config_option_update")(
-                {"user": tk.current_user.name},
-                data_dict,
-            )
-        except tk.ValidationError as e:
-            return tk.render(
-                "mailcraft/config.html",
-                extra_vars={
-                    "data": data_dict,
-                    "errors": e.error_dict,
-                    "error_summary": e.error_summary,
-                    "configs": mc_config.get_config_options(),
-                },
-            )
-
-        tk.h.flash_success(tk._("Config options have been updated"))
-        return tk.h.redirect_to("mailcraft.config")
-
-
 class MailReadView(MethodView):
     def get(self, mail_id: str) -> str:
         try:
@@ -122,26 +90,30 @@ def _build_context() -> types.Context:
 
 
 def send_test_email() -> Response:
-    from ckanext.mailcraft.mailer import DefaultMailer
+    """Send a test email"""
+    mailer = get_mailer()
 
-    mailer = DefaultMailer()
     mailer.mail_recipients(
         subject="Hello world",
-        recipients=["kvaqich@gmail.com"],
+        recipients=["test@gmail.com"],
         body="Hello world",
         body_html=tk.render(
             "mailcraft/emails/test.html",
             extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
         ),
     )
+
     tk.h.flash_success(tk._("Test email has been sent"))
 
     return tk.redirect_to("mailcraft.dashboard")
 
 
 mailcraft.add_url_rule("/test", endpoint="test", view_func=send_test_email)
-mailcraft.add_url_rule("/config", view_func=ConfigView.as_view("config"))
 mailcraft.add_url_rule("/dashboard", view_func=DashboardView.as_view("dashboard"))
+mailcraft.add_url_rule(
+    "/config",
+    view_func=ApConfigurationPageView.as_view("config", "mailcraft_config"),
+)
 mailcraft.add_url_rule(
     "/dashboard/read/<mail_id>", view_func=MailReadView.as_view("mail_read")
 )

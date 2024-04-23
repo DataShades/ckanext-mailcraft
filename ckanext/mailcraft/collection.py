@@ -125,15 +125,6 @@ class MailCollection(ApCollection):
                         {"value": Email.State.success, "text": "success"},
                     ],
                 },
-            ),
-            LinkFilter(
-                name="type",
-                type="link",
-                options={
-                    "label": "Clear",
-                    "endpoint": "ap_log.list",
-                    "kwargs": {},
-                },
-            ),
+            )
         ],
     )

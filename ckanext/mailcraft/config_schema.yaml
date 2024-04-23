@@ -1,0 +1,43 @@
+scheming_version: 2
+schema_id: mailcraft_config
+about: Configuration options for the DOI extension
+
+fields:
+  - field_name: ckanext.mailcraft.test_conn_on_startup
+    validators: default(true), one_of([true, false])
+    preset: select
+    required: true
+    choices:
+      - value: true
+        label: Enabled
+      - value: false
+        label: Disabled
+
+  - field_name: ckanext.mailcraft.conn_timeout
+    label: Connection timeout
+    description: Specify a timeout for an SMTP connection
+    input_type: number
+    required: true
+    validators: default(10), int_validator
+
+  - field_name: ckanext.mailcraft.stop_outgoing_emails
+    validators: default(true), one_of([true, false])
+    preset: select
+    required: true
+    choices:
+      - value: true
+        label: Enabled
+      - value: false
+        label: Disabled
+
+  - field_name: ckanext.mailcraft.mail_per_page
+    label: Mails per page
+    description: Specify a number of mails to show per page on a dashboard
+    input_type: number
+    required: true
+    validators: default(20), int_validator
+
+  - field_name: ckanext.mailcraft.redirect_emails_to
+    label: Redirect emails to
+    description: Redirect outgoing emails to a specified email
+    validators: default(''), unicode_safe
