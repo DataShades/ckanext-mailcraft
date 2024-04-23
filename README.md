@@ -2,70 +2,54 @@
 
 # ckanext-mailcraft
 
-**TODO:** Put a description of your extension here:  What does it do? What features does it have? Consider including some screenshots or embedding a video!
+The `ckanext-mailcraft` extension provides next features:
+- A custom mailer that can be conveniently expanded as needed
+- Prestyled email template
+- A dashboard where you can view a list of all sent e-mails
+- A function of stopping the sending of all emails sent through our mailer in order to debug the functionality.
 
+Dashboard and config pages will be available only if you're using the `ckanext-admin-panel` extension. If not, only
+mailer will be available.
+
+
+## Usage
+To use a mailer, you just have to import it.
+
+    ```
+    from ckanext.mailcraft.utils import get_mailer
+
+    mailer = get_mailer()
+
+    mailer.mail_recipients(
+        subject="Hello world",
+        recipients=["test@gmail.com"],
+        body="Hello world",
+        body_html=tk.render(
+            "mailcraft/emails/test.html",
+            extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
+        ),
+    )
+    ```
 
 ## Requirements
-
-**TODO:** For example, you might want to mention here which versions of CKAN this
-extension works with.
-
-If your extension works across different versions you can add the following table:
 
 Compatibility with core CKAN versions:
 
 | CKAN version    | Compatible?   |
 | --------------- | ------------- |
-| 2.6 and earlier | not tested    |
-| 2.7             | not tested    |
-| 2.8             | not tested    |
-| 2.9             | not tested    |
 
-Suggested values:
-
-* "yes"
-* "not tested" - I can't think of a reason why it wouldn't work
-* "not yet" - there is an intention to get it working
-* "no"
+| 2.9 and earlier | no            |
+| 2.10+           | yes           |
 
 
 ## Installation
 
-**TODO:** Add any additional install steps to the list below.
-   For example installing any non-Python dependencies or adding any required
-   config settings.
-
-To install ckanext-mailcraft:
-
-1. Activate your CKAN virtual environment, for example:
-
-     . /usr/lib/ckan/default/bin/activate
-
-2. Clone the source and install it on the virtualenv
-
-    git clone https://github.com/mutantsan/ckanext-mailcraft.git
-    cd ckanext-mailcraft
-    pip install -e .
-	pip install -r requirements.txt
-
-3. Add `mailcraft` to the `ckan.plugins` setting in your CKAN
-   config file (by default the config file is located at
-   `/etc/ckan/default/ckan.ini`).
-
-4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu:
-
-     sudo service apache2 reload
+Use PyPI to install the extension with pip. Or check the Developer installation section.
 
 
 ## Config settings
 
-None at present
-
-**TODO:** Document any optional config settings here. For example:
-
-	# The minimum number of hours to wait before re-checking a resource
-	# (optional, default: 24).
-	ckanext.mailcraft.some_setting = some_default_value
+There's a separate page in admin panel to configure mailcraft settings. Check the `config_declaration.yaml` file. 
 
 
 ## Developer installation
@@ -82,41 +66,8 @@ do:
 ## Tests
 
 To run the tests, do:
-
     pytest --ckan-ini=test.ini
 
-
-## Releasing a new version of ckanext-mailcraft
-
-If ckanext-mailcraft should be available on PyPI you can follow these steps to publish a new version:
-
-1. Update the version number in the `setup.py` file. See [PEP 440](http://legacy.python.org/dev/peps/pep-0440/#public-version-identifiers) for how to choose version numbers.
-
-2. Make sure you have the latest version of necessary packages:
-
-    pip install --upgrade setuptools wheel twine
-
-3. Create a source and binary distributions of the new version:
-
-       python setup.py sdist bdist_wheel && twine check dist/*
-
-   Fix any errors you get.
-
-4. Upload the source distribution to PyPI:
-
-       twine upload dist/*
-
-5. Commit any outstanding changes:
-
-       git commit -a
-       git push
-
-6. Tag the new release of the project on GitHub with the version number from
-   the `setup.py` file. For example if the version number in `setup.py` is
-   0.0.1 then do:
-
-       git tag 0.0.1
-       git push --tags
 
 ## License
 
