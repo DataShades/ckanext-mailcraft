@@ -15,7 +15,6 @@ mailer will be available.
 ## Usage
 To use a mailer, you just have to import it.
 
-    ```
     from ckanext.mailcraft.utils import get_mailer
 
     mailer = get_mailer()
@@ -29,7 +28,6 @@ To use a mailer, you just have to import it.
             extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
         ),
     )
-    ```
 
 ## Requirements
 
