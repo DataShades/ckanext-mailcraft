@@ -96,7 +96,6 @@ class DefaultMailer(BaseMailer):
 
         msg["From"] = email_utils.formataddr((self.site_title, self.mail_from))
         msg["To"] = msg["Bcc"] = ", ".join(recipients)
-        # msg['To'] = email_utils.formataddr((recipient_name, recipient_email))
         msg["Subject"] = subject
         msg["Date"] = email_utils.formatdate(time())
 
@@ -232,7 +231,6 @@ class DefaultMailer(BaseMailer):
             raise MailerException(tk._("User doesn't have an email address"))
 
         self.mail_recipients(
-            # user_obj.display_name,
             subject,
             [user_obj.email],
             body,

@@ -6,7 +6,7 @@ from dominate import tags
 import ckan.plugins.toolkit as tk
 
 from ckanext.collection.utils import Filters, ModelData
-from ckanext.collection.types import InputFilter, LinkFilter, SelectFilter
+from ckanext.collection.types import InputFilter, SelectFilter
 
 from ckanext.ap_main.collection.base import (
     ApCollection,

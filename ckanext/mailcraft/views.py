@@ -14,7 +14,6 @@ from ckanext.ap_main.views.generics import ApConfigurationPageView
 
 from ckanext.collection.shared import get_collection
 
-import ckanext.mailcraft.config as mc_config
 from ckanext.mailcraft.utils import get_mailer
 
 mailcraft = Blueprint("mailcraft", __name__, url_prefix="/admin-panel/mailcraft")

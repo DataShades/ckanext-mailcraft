@@ -41,12 +41,6 @@ class MailcraftPlugin(plugins.SingletonPlugin):
         toolkit.add_public_directory(config_, "public")
         toolkit.add_resource("assets", "mailcraft")
 
-    def _update_config_schema(self, schema):
-        for _, config in mc_config.get_config_options().items():
-            schema.update({config["key"]: config["validators"]})
-
-        return schema
-
     # IConfigurable
 
     def configure(self, config: CKANConfig) -> None:
@@ -59,24 +53,31 @@ class MailcraftPlugin(plugins.SingletonPlugin):
     def get_signal_subscriptions(self) -> types.SignalMapping:
         return {
             toolkit.signals.ckanext.signal("ap_main:collect_config_sections"): [
-                collect_config_sections_subs
+                self.collect_config_sections_subs
+            ],
+            toolkit.signals.ckanext.signal("ap_main:collect_config_schemas"): [
+                self.collect_config_schemas_subs
             ],
         }
 
+    @staticmethod
+    def collect_config_sections_subs(sender: None):
+        return {
+            "name": "Mailcraft",
+            "configs": [
+                {
+                    "name": "Global settings",
+                    "blueprint": "mailcraft.config",
+                    "info": "Global mailcraft configurations",
+                },
+                {
+                    "name": "Dashboard",
+                    "blueprint": "mailcraft.dashboard",
+                    "info": "Mailcraft dashboard",
+                },
+            ],
+        }
 
-def collect_config_sections_subs(sender: None):
-    return {
-        "name": "Mailcraft",
-        "configs": [
-            {
-                "name": "Global settings",
-                "blueprint": "mailcraft.config",
-                "info": "Global mailcraft configurations",
-            },
-            {
-                "name": "Dashboard",
-                "blueprint": "mailcraft.dashboard",
-                "info": "Mailcraft dashboard",
-            },
-        ],
-    }
+    @staticmethod
+    def collect_config_schemas_subs(sender: None):
+        return ["ckanext.mailcraft:config_schema.yaml"]

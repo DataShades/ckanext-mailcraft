@@ -20,12 +20,6 @@ groups:
         default: false
         editable: true
 
-      - key: ckanext.mailcraft.mail_per_page
-        type: int
-        description: Specify a number of mails to show per page on a dashboard
-        default: 20
-        editable: true
-
       - key: ckanext.mailcraft.redirect_emails_to
         description: Redirect outgoing emails to a specified email
         editable: true
