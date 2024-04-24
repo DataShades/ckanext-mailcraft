@@ -6,6 +6,7 @@ fields:
   - field_name: ckanext.mailcraft.test_conn_on_startup
     label: Test connection on startup
     validators: default(true), one_of([true, false])
+    help_text: If enabled, the extension will test the connection to the SMTP server on CKAN startup
     preset: select
     required: true
     choices:
@@ -16,13 +17,14 @@ fields:
 
   - field_name: ckanext.mailcraft.conn_timeout
     label: Connection timeout
-    description: Specify a timeout for an SMTP connection
+    help_text: Specify a timeout for an SMTP connection
     input_type: number
     required: true
     validators: default(10), int_validator
 
   - field_name: ckanext.mailcraft.stop_outgoing_emails
     label: Stop outgoing emails
+    help_text: If enabled, the extension will stop all outgoing emails and only store them in the database
     validators: default(true), one_of([true, false])
     preset: select
     required: true
@@ -34,5 +36,5 @@ fields:
 
   - field_name: ckanext.mailcraft.redirect_emails_to
     label: Redirect emails to
-    description: Redirect outgoing emails to a specified email1
+    help_text: Redirect outgoing emails to a specified email1
     validators: ignore_empty, unicode_safe, email_validator
