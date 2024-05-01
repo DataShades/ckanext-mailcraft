@@ -36,6 +36,7 @@ class MailCollection(ApCollection):
             "recipient",
             "timestamp",
         },
+        width={"bulk-action": "3%", "id": "4%"},
         searchable={"subject"},
         labels={
             "bulk-action": tk.literal(
