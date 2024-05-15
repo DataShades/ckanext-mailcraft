@@ -36,5 +36,5 @@ fields:
 
   - field_name: ckanext.mailcraft.redirect_emails_to
     label: Redirect emails to
-    help_text: Redirect outgoing emails to a specified email1
+    help_text: Redirect outgoing emails to a specified email
     validators: ignore_empty, unicode_safe, email_validator
