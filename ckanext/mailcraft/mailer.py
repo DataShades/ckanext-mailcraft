@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
 import logging
@@ -51,6 +52,7 @@ class BaseMailer(ABC):
         body_html: str,
         headers: Optional[dict[str, Any]] = None,
         attachments: Optional[Iterable[Attachment]] = None,
+        to: Optional[list[str]] = None,
     ):
         pass
 
@@ -88,6 +90,7 @@ class DefaultMailer(BaseMailer):
         body_html: str,
         headers: Optional[dict[str, Any]] = None,
         attachments: Optional[Iterable[Attachment]] = None,
+        to: Optional[list[str]] = None,
     ):
         headers = headers or {}
         attachments = attachments or []
@@ -95,9 +98,12 @@ class DefaultMailer(BaseMailer):
         msg = EmailMessage()
 
         msg["From"] = email_utils.formataddr((self.site_title, self.mail_from))
-        msg["To"] = msg["Bcc"] = ", ".join(recipients)
         msg["Subject"] = subject
         msg["Date"] = email_utils.formatdate(time())
+        if to:
+            msg["To"] = msg["Bcc"] = ", ".join(to)
+        else:
+            msg["To"] = msg["Bcc"] = ", ".join(recipients)
 
         if not tk.config.get("ckan.hide_version"):
             msg["X-Mailer"] = f"CKAN {tk.h.ckan_version()}"

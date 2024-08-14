@@ -15,7 +15,7 @@ from ckanext.ap_main.collection.base import (
     GlobalAction,
 )
 
-from ckanext.mailcraft.model import Email
+from ckanext.mailcraft_dashboard.model import Email
 
 
 class MailCollection(ApCollection):

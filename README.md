@@ -8,9 +8,8 @@ The `ckanext-mailcraft` extension provides next features:
 - A dashboard where you can view a list of all sent e-mails
 - A function of stopping the sending of all emails sent through our mailer in order to debug the functionality.
 
-Dashboard and config pages will be available only if you're using the `ckanext-admin-panel` extension. If not, only
-mailer will be available.
-
+To enable the extension, add `mailcraft` to the `ckan.plugins` setting in your CKAN.
+If you want to enable the dashboard you should also add `mailcraft_dashboard` to the `ckan.plugins` setting.
 
 ## Usage
 To use a mailer, you just have to import it.
@@ -28,6 +27,11 @@ To use a mailer, you just have to import it.
             extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
         ),
     )
+
+## Dashboard
+
+The mailcraft dashboard requires the `ckanext-admin-panel` extension to be enabled. Otherwise, there most likely will be
+an exception, cause we're heavily relying on the admin panel and some extra requirements of it.
 
 ## Requirements
 

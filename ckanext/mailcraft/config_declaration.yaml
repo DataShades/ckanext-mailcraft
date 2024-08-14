@@ -1,6 +1,6 @@
 version: 1
 groups:
-  - annotation: ckanext-mailcraft
+  - annotation: mailcraft
     options:
       - key: ckanext.mailcraft.test_conn_on_startup
         type: bool
