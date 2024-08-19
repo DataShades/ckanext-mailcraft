@@ -6,8 +6,8 @@ import ckan.plugins.toolkit as tk
 import ckan.model as model
 from ckan.logic import validate
 
-import ckanext.mailcraft.model as mc_model
-from ckanext.mailcraft.logic import schema
+import ckanext.mailcraft_dashboard.model as mc_model
+from ckanext.mailcraft_dashboard.logic import schema
 
 
 @tk.side_effect_free

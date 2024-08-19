@@ -11,11 +11,12 @@ from email.message import EmailMessage
 from time import time
 from typing import Any, Iterable, Optional, cast
 
+import ckan.plugins as p
 import ckan.model as model
 import ckan.plugins.toolkit as tk
 
 import ckanext.mailcraft.config as mc_config
-import ckanext.mailcraft.model as mc_model
+import ckanext.mailcraft_dashboard.model as mc_model
 from ckanext.mailcraft.exception import MailerException
 from ckanext.mailcraft.types import (
     Attachment,
@@ -200,6 +201,9 @@ class DefaultMailer(BaseMailer):
         body_html: str,
         state: str = mc_model.Email.State.success,
     ) -> None:
+        if not p.plugin_loaded("mailcraft_dashboard"):
+            return
+
         mc_model.Email.save_mail(email_data, body_html, state)
 
     def _send_email(self, recipients, msg: EmailMessage):

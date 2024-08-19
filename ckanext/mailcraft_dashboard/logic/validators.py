@@ -4,7 +4,7 @@ from typing import Any
 
 import ckan.plugins.toolkit as tk
 
-import ckanext.mailcraft.model as mc_model
+import ckanext.mailcraft_dashboard.model as mc_model
 
 
 def mc_mail_exists(v: str, context) -> Any:
