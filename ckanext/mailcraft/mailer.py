@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+import codecs
+import os
 import logging
 import mimetypes
 import smtplib
@@ -248,3 +250,38 @@ class DefaultMailer(BaseMailer):
             headers=headers,
             attachments=attachments,
         )
+
+    def send_reset_link(self, user: model.User) -> None:
+        self.create_reset_key(user)
+        extra_vars = {
+            "reset_link": tk.h.url_for(
+                "user.perform_reset", id=user.id, key=user.reset_key, qualified=True
+            ),
+            "site_title": tk.config.get("ckan.site_title"),
+            "site_url": tk.config.get("ckan.site_url"),
+            "user_name": user.name,
+        }
+
+        self.mail_user(
+            user=user.name,
+            subject=f"Reset your password",
+            body=tk.render(
+                "mailcraft/emails/reset_password/body.txt",
+                extra_vars,
+            ),
+            body_html=tk.render(
+                "mailcraft/emails/reset_password/body.html",
+                extra_vars,
+            ),
+        )
+
+    def create_reset_key(self, user: model.User):
+        user.reset_key = codecs.encode(os.urandom(16), "hex").decode()
+        model.repo.commit_and_remove()
+
+    def verify_reset_link(self, user: model.User, key: Optional[str]) -> bool:
+        if not key:
+            return False
+        if not user.reset_key or len(user.reset_key) < 5:
+            return False
+        return key.strip() == user.reset_key
