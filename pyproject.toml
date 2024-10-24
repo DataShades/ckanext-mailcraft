@@ -1,3 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ckanext-mailcraft"
+version = "0.2.1"
+description = "Custom extandable mailer for CKAN"
+authors = [
+    {name = "DataShades", email = "datashades@linkdigital.com.au"},
+    {name = "Oleksandr Cherniavskyi", email = "mutantsan@gmail.com"},
+]
+maintainers = [
+    {name = "DataShades", email = "datashades@linkdigital.com.au"},
+]
+license = {text = "AGPL"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+keywords = ["CKAN"]
+dependencies = []
+optional-dependencies = {}
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/DataShades/ckanext-mailcraft"
+
+[project.entry-points]
+"babel.extractors" = {ckan = "ckan.lib.extract:extract_ckan"}
+
+[project.entry-points."ckan.plugins"]
+mailcraft = "ckanext.mailcraft.plugin:MailcraftPlugin"
+
+[tool.setuptools.packages]
+find = {}
+
 [tool.black]
 line-length = 88
 preview = true
