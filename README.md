@@ -1,4 +1,4 @@
-[![Tests](https://github.com/mutantsan/ckanext-mailcraft/workflows/Tests/badge.svg?branch=main)](https://github.com/mutantsan/ckanext-mailcraft/actions)
+[![Tests](https://github.com/DataShades/ckanext-mailcraft/workflows/Tests/badge.svg?branch=main)](https://github.com/DataShades/ckanext-mailcraft/actions)
 
 # ckanext-mailcraft
 
@@ -59,7 +59,7 @@ There's a separate page in admin panel to configure mailcraft settings. Check th
 To install ckanext-mailcraft for development, activate your CKAN virtualenv and
 do:
 
-    git clone https://github.com/mutantsan/ckanext-mailcraft.git
+    git clone https://github.com/DataShades/ckanext-mailcraft.git
     cd ckanext-mailcraft
     python setup.py develop
     pip install -r dev-requirements.txt
