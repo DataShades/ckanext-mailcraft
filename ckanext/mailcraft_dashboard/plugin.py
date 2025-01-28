@@ -13,7 +13,6 @@ from ckanext.mailcraft_dashboard.collection import MailCollection
 @toolkit.blanket.actions
 @toolkit.blanket.auth_functions
 @toolkit.blanket.validators
-@toolkit.blanket.config_declarations
 class MailcraftDashboardPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ISignal)
@@ -63,4 +62,4 @@ class MailcraftDashboardPlugin(plugins.SingletonPlugin):
 
     @staticmethod
     def collect_config_schemas_subs(sender: None):
-        return ["ckanext.mailcraft:config_schema.yaml"]
+        return ["ckanext.mailcraft_dashboard:config_schema.yaml"]
