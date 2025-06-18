@@ -1,4 +1,4 @@
-[![Tests](https://github.com/DataShades/ckanext-mailcraft/workflows/Tests/badge.svg?branch=main)](https://github.com/DataShades/ckanext-mailcraft/actions)
+[![Tests](https://github.com/DataShades/ckanext-mailcraft/actions/workflows/test.yml/badge.svg)](https://github.com/DataShades/ckanext-mailcraft/actions/workflows/test.yml)
 
 # ckanext-mailcraft
 
