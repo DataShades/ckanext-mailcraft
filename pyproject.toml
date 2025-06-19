@@ -13,7 +13,6 @@ authors = [
 maintainers = [
     {name = "DataShades", email = "datashades@linkdigital.com.au"},
 ]
-license = {text = "AGPL"}
 classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
@@ -28,6 +27,9 @@ optional-dependencies = {}
 [project.readme]
 file = "README.md"
 content-type = "text/markdown"
+
+[project.license]
+file = "LICENSE"
 
 [project.urls]
 Homepage = "https://github.com/DataShades/ckanext-mailcraft"
