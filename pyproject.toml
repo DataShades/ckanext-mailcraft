@@ -21,7 +21,9 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 keywords = ["CKAN"]
-dependencies = []
+dependencies = [
+    "ckanext-admin-panel",
+]
 optional-dependencies = {}
 
 [project.readme]
