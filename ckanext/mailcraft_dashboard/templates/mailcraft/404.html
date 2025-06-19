@@ -7,5 +7,10 @@
 {% endblock breadcrumb_content %}
 
 {% block ap_content %}
-    <p style="font-size: 70px">MAIL NOT FOUND - 404</p>
+    <a href="{{ h.url_for('mailcraft.dashboard') }}" class="btn btn-default mb-3">
+        <i class="fa fa-arrow-left"></i>
+        {{ _("Back to dashboard") }}
+    </a>
+
+    <p>{{ _("Mail not found") }}</p>
 {% endblock ap_content %}

@@ -10,10 +10,20 @@ import ckanext.mailcraft_dashboard.model as mc_model
 from ckanext.mailcraft_dashboard.logic import schema
 
 
+@validate(schema.mail_create_schema)
+def mc_mail_create(context, data_dict):
+    tk.check_access("mc_mail_create", context, data_dict)
+
+    email = mc_model.Email.create(**data_dict)
+
+    context["session"].commit()
+
+    return email.dictize(context)
+
+
 @tk.side_effect_free
 @validate(schema.mail_list_schema)
 def mc_mail_list(context, data_dict):
-    """Return a list of mails from database"""
     tk.check_access("mc_mail_list", context, data_dict)
 
     query = model.Session.query(mc_model.Email)
@@ -29,16 +39,13 @@ def mc_mail_list(context, data_dict):
 @tk.side_effect_free
 @validate(schema.mail_show_schema)
 def mc_mail_show(context, data_dict):
-    """Return a data for a specific mail"""
     tk.check_access("mc_mail_show", context, data_dict)
 
     return mc_model.Email.get(data_dict["id"]).dictize(context)  # type: ignore
 
 
-@tk.side_effect_free
 @validate(schema.mail_delete_schema)
 def mc_mail_delete(context, data_dict):
-    """Delete a specific mail"""
     tk.check_access("mc_mail_delete", context, data_dict)
 
     mail = cast(mc_model.Email, mc_model.Email.get(data_dict["id"]))

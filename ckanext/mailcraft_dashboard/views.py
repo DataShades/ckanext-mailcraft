@@ -1,18 +1,22 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any
 
 from flask import Blueprint, Response
 from flask.views import MethodView
 
 import ckan.plugins.toolkit as tk
 import ckan.types as types
-from ckan.logic import parse_params
 
 from ckanext.ap_main.utils import ap_before_request
-from ckanext.ap_main.views.generics import ApConfigurationPageView
-
-from ckanext.collection.shared import get_collection
+from ckanext.ap_main.views.generics import ApConfigurationPageView, ApTableView
+import ckanext.ap_main.types as ap_types
+from ckanext.ap_main.table import (
+    ActionDefinition,
+    ColumnDefinition,
+    GlobalActionDefinition,
+    TableDefinition,
+)
 
 from ckanext.mailcraft.utils import get_mailer
 
@@ -20,55 +24,70 @@ mailcraft = Blueprint("mailcraft", __name__, url_prefix="/admin-panel/mailcraft"
 mailcraft.before_request(ap_before_request)
 
 
-class DashboardView(MethodView):
-    def get(self) -> str:
-        return tk.render(
-            "mailcraft/dashboard.html",
-            extra_vars={
-                "collection": get_collection(
-                    "mailcraft-dashboard", parse_params(tk.request.args)
+class DashboardTable(TableDefinition):
+    def __init__(self):
+        super().__init__(
+            name="content",
+            ajax_url=tk.url_for("mailcraft.dashboard", data=True),
+            columns=[
+                ColumnDefinition(field="id", filterable=False, resizable=False),
+                ColumnDefinition(field="subject", width=250),
+                ColumnDefinition(field="sender"),
+                ColumnDefinition(field="recipient"),
+                ColumnDefinition(field="state", resizable=False, width=100),
+                ColumnDefinition(
+                    field="timestamp",
+                    formatters=[("date", {"date_format": "%Y-%m-%d %H:%M"})],
+                    resizable=False,
                 ),
-            },
+                ColumnDefinition(
+                    field="actions",
+                    formatters=[("actions", {})],
+                    filterable=False,
+                    tabulator_formatter="html",
+                    sorter=None,
+                    resizable=False,
+                ),
+            ],
+            actions=[
+                ActionDefinition(
+                    name="view",
+                    label=tk._("View"),
+                    icon="fa fa-eye",
+                    endpoint="mailcraft.mail_read",
+                    url_params={
+                        "view": "read",
+                        "mail_id": "$id",
+                    },
+                ),
+            ],
+            global_actions=[
+                GlobalActionDefinition(
+                    action="delete", label="Delete selected entities"
+                ),
+            ],
+            table_action_snippet="mailcraft/table_actions.html",
         )
 
-    def _get_bulk_actions(self, value: str) -> Callable[[list[str]], bool] | None:
-        return {"1": self._remove_emails}.get(value)
+    def get_raw_data(self) -> list[dict[str, Any]]:
+        return tk.get_action("mc_mail_list")(_build_context(), {})
 
-    def _remove_emails(self, mail_ids: list[str]) -> bool:
-        for mail_id in mail_ids:
-            try:
-                tk.get_action("mc_mail_delete")(
-                    {"ignore_auth": True},
-                    {"id": mail_id},
-                )
-            except tk.ObjectNotFound:
-                pass
 
-        return True
+class DashboardView(ApTableView):
+    def get_global_action(self, value: str) -> ap_types.GlobalActionHandler | None:
+        return {"delete": self._remove_emails}.get(value)
 
-    def post(self) -> Response:
-        if "clear_mails" in tk.request.form:
-            tk.get_action("mc_mail_clear")({"ignore_auth": True}, {})
-            tk.h.flash_success(tk._("Mails have been cleared."))
-            return tk.redirect_to("mailcraft.dashboard")
+    @staticmethod
+    def _remove_emails(row: ap_types.Row) -> ap_types.GlobalActionHandlerResult:
+        try:
+            tk.get_action("mc_mail_delete")(
+                {"ignore_auth": True},
+                {"id": row["id"]},
+            )
+        except tk.ObjectNotFound:
+            return False, tk._("Mail not found")
 
-        bulk_action = tk.request.form.get("bulk-action", "0")
-        mail_ids = tk.request.form.getlist("entity_id")
-
-        if not bulk_action or not mail_ids:
-            return tk.redirect_to("mailcraft.dashboard")
-
-        action_func = self._get_bulk_actions(bulk_action)
-
-        if not action_func:
-            tk.h.flash_error(tk._("The bulk action is not implemented"))
-            return tk.redirect_to("mailcraft.dashboard")
-
-        action_func(mail_ids)
-
-        tk.h.flash_success(tk._("Done."))
-
-        return tk.redirect_to("mailcraft.dashboard")
+        return True, None
 
 
 class MailReadView(MethodView):
@@ -79,6 +98,13 @@ class MailReadView(MethodView):
             return tk.render("mailcraft/404.html")
 
         return tk.render("mailcraft/mail_read.html", extra_vars={"mail": mail})
+
+
+class MailClearView(MethodView):
+    def post(self) -> str:
+        tk.get_action("mc_mail_clear")(_build_context(), {})
+
+        return ""
 
 
 def _build_context() -> types.Context:
@@ -108,13 +134,18 @@ def send_test_email() -> Response:
 
 
 mailcraft.add_url_rule("/test", endpoint="test", view_func=send_test_email)
-mailcraft.add_url_rule("/dashboard", view_func=DashboardView.as_view("dashboard"))
+mailcraft.add_url_rule(
+    "/dashboard", view_func=DashboardView.as_view("dashboard", table=DashboardTable)
+)
 mailcraft.add_url_rule(
     "/config",
     view_func=ApConfigurationPageView.as_view("config", "mailcraft_config"),
 )
 mailcraft.add_url_rule(
     "/dashboard/read/<mail_id>", view_func=MailReadView.as_view("mail_read")
+)
+mailcraft.add_url_rule(
+    "/dashboard/clear", view_func=MailClearView.as_view("clear_mails")
 )
 
 

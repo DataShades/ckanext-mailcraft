@@ -4,10 +4,6 @@ import ckan.types as types
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
-from ckanext.collection.interfaces import ICollection, CollectionFactory
-
-from ckanext.mailcraft_dashboard.collection import MailCollection
-
 
 @toolkit.blanket.blueprints
 @toolkit.blanket.actions
@@ -16,14 +12,6 @@ from ckanext.mailcraft_dashboard.collection import MailCollection
 class MailcraftDashboardPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ISignal)
-    plugins.implements(ICollection, inherit=True)
-
-    # ICollection
-
-    def get_collection_factories(self) -> dict[str, CollectionFactory]:
-        return {
-            "mailcraft-dashboard": MailCollection,
-        }
 
     # IConfigurer
 

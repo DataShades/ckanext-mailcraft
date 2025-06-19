@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Column, DateTime, Integer, Text
+from sqlalchemy import Column, DateTime, Integer, Text, func
 from sqlalchemy.orm import Query
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableDict
@@ -29,7 +28,7 @@ class Email(tk.BaseModel):
     id = Column(Integer, primary_key=True)
 
     subject = Column(Text)
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    timestamp = Column(DateTime, nullable=False, default=func.now())
     sender = Column(Text)
     recipient = Column(Text)
     message = Column(Text)
@@ -41,6 +40,15 @@ class Email(tk.BaseModel):
         query: Query = model.Session.query.query(cls).order_by(cls.timestamp.desc())
 
         return [mail.dictize({}) for mail in query.all()]
+
+    @classmethod
+    def create(cls, **kwargs) -> Email:
+        mail = cls(**kwargs)
+
+        model.Session.add(mail)
+        model.Session.commit()
+
+        return mail
 
     @classmethod
     def save_mail(
@@ -68,7 +76,7 @@ class Email(tk.BaseModel):
         return {
             "id": self.id,
             "subject": self.subject,
-            "timestamp": self.timestamp,
+            "timestamp": self.timestamp.isoformat(),
             "sender": self.sender,
             "recipient": self.recipient,
             "message": self.message,

@@ -10,6 +10,11 @@
 {% endblock breadcrumb_content %}
 
 {% block ap_content %}
+    <a href="{{ h.url_for('mailcraft.dashboard') }}" class="btn btn-default mb-3">
+        <i class="fa fa-arrow-left"></i>
+        {{ _("Back to dashboard") }}
+    </a>
+
     {% if mail.extras %}
         <div class="mailcraft-mail-meta">
             <h3>{{ _("Email meta") }}</h3>
