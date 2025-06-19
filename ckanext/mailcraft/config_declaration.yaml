@@ -20,6 +20,12 @@ groups:
         default: false
         editable: true
 
+      - key: ckanext.mailcraft.save_emails
+        type: bool
+        description: Specify if we are saving emails to database
+        default: false
+        editable: true
+
       - key: ckanext.mailcraft.redirect_emails_to
         description: Redirect outgoing emails to a specified email
         editable: true

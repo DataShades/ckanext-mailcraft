@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 class BaseMailer(ABC):
     def __init__(self):
         self.server = tk.config["smtp.server"]
-        self.start_tls = tk.config["smtp.starttls"]
+        self.start_tls = tk.asbool(tk.config["smtp.starttls"])
         self.user = tk.config["smtp.user"]
         self.password = tk.config["smtp.password"]
         self.mail_from = tk.config["smtp.mail_from"]
@@ -44,6 +44,7 @@ class BaseMailer(ABC):
 
         self.conn_timeout = mc_config.get_conn_timeout()
         self.stop_outgoing = mc_config.stop_outgoing_emails()
+        self.save_emails = mc_config.save_emails_to_db()
         self.redirect_to = mc_config.get_redirect_email()
 
     @abstractmethod
@@ -136,7 +137,8 @@ class DefaultMailer(BaseMailer):
                     email_data["To"] = email_data["Bcc"] = ", ".join(recipients)
 
                 self._send_email(recipients, msg)
-        except MailerException:
+        except MailerException as e:
+            log.error(f"Error sending email to {recipients}: {e}")
             self._save_email(email_data, body_html, mc_model.Email.State.failed)
         else:
             if not self.stop_outgoing:
@@ -203,7 +205,7 @@ class DefaultMailer(BaseMailer):
         body_html: str,
         state: str = mc_model.Email.State.success,
     ) -> None:
-        if not p.plugin_loaded("mailcraft_dashboard"):
+        if not p.plugin_loaded("mailcraft_dashboard") or not self.save_emails:
             return
 
         mc_model.Email.save_mail(email_data, body_html, state)

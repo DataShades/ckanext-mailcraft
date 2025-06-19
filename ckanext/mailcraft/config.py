@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ckan.plugins.toolkit as tk
 
-
 CONF_TEST_CONN = "ckanext.mailcraft.test_conn_on_startup"
 DEF_TEST_CONN = False
 
@@ -11,6 +10,9 @@ DEF_CONN_TIMEOUT = 10
 
 CONF_STOP_OUTGOING = "ckanext.mailcraft.stop_outgoing_emails"
 DEF_STOP_OUTGOING = False
+
+CONF_SAVE_EMAILS_TO_DB = "ckanext.mailcraft.save_emails"
+DEF_SAVE_EMAILS_TO_DB = False
 
 CONF_MAIL_PER_PAGE = "ckanext.mailcraft.mail_per_page"
 DEF_MAIL_PER_PAGE = 20
@@ -33,6 +35,11 @@ def stop_outgoing_emails() -> bool:
     """Check if we are stopping outgoing emails. In this case, we are only
     saving it to dashboard"""
     return tk.asbool(tk.config.get(CONF_STOP_OUTGOING, DEF_STOP_OUTGOING))
+
+
+def save_emails_to_db() -> bool:
+    """Check if we are saving emails to database"""
+    return tk.asbool(tk.config.get(CONF_SAVE_EMAILS_TO_DB, DEF_SAVE_EMAILS_TO_DB))
 
 
 def get_mail_per_page() -> int:
