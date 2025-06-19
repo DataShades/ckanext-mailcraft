@@ -107,6 +107,26 @@ class MailClearView(MethodView):
         return ""
 
 
+class MailTestView(MethodView):
+    def post(self) -> Response:
+        mailer = get_mailer()
+
+        mailer.mail_recipients(
+            subject="Hello world",
+            recipients=["test@gmail.com"],
+            body="Hello world",
+            body_html=tk.render(
+                "mailcraft/emails/test.html",
+                extra_vars={
+                    "site_url": mailer.site_url,
+                    "site_title": mailer.site_title,
+                },
+            ),
+        )
+
+        return ""
+
+
 def _build_context() -> types.Context:
     return {
         "user": tk.current_user.name,
@@ -114,26 +134,7 @@ def _build_context() -> types.Context:
     }
 
 
-def send_test_email() -> Response:
-    """Send a test email"""
-    mailer = get_mailer()
-
-    mailer.mail_recipients(
-        subject="Hello world",
-        recipients=["test@gmail.com"],
-        body="Hello world",
-        body_html=tk.render(
-            "mailcraft/emails/test.html",
-            extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
-        ),
-    )
-
-    tk.h.flash_success(tk._("Test email has been sent"))
-
-    return tk.redirect_to("mailcraft.dashboard")
-
-
-mailcraft.add_url_rule("/test", endpoint="test", view_func=send_test_email)
+mailcraft.add_url_rule("/test", view_func=MailTestView.as_view("send_test"))
 mailcraft.add_url_rule(
     "/dashboard", view_func=DashboardView.as_view("dashboard", table=DashboardTable)
 )
