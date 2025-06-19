@@ -266,7 +266,7 @@ class DefaultMailer(BaseMailer):
 
         self.mail_user(
             user=user.name,
-            subject=f"Reset your password",
+            subject="Reset your password",
             body=tk.render(
                 "mailcraft/emails/reset_password/body.txt",
                 extra_vars,
