@@ -22,7 +22,11 @@ classifiers = [
 ]
 keywords = ["CKAN"]
 dependencies = []
-optional-dependencies = {}
+
+[project.optional-dependencies]
+test = [
+    "ckanext-admin-panel @ git+https://github.com/datashades/ckanext-admin-panel.git"
+]
 
 [project.readme]
 file = "README.md"

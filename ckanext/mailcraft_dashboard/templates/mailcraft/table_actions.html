@@ -2,9 +2,17 @@
     <div class="mb-2">
         <form class="d-inline-block" hx-post="{{ h.url_for('mailcraft.clear_mails') }}" hx-swap="none"
             hx-confirm="{{ _('Are you sure you want to clear all mails?') }}"
+            hx-refresh-tabulator="true"
             hx-confirm-success="{{ _('The mails have been cleared.') }}">
             <button type="submit" class="btn btn-primary">
                 {{ _("Clear mails")}}
+            </button>
+        </form>
+        <form class="d-inline-block" hx-post="{{ h.url_for('mailcraft.send_test') }}" hx-swap="none"
+            hx-refresh-tabulator="true"
+            hx-confirm-success="{{ _('A test mail has been created.') }}">
+            <button type="submit" class="btn btn-primary">
+                {{ _("Send test mail")}}
             </button>
         </form>
     </div>

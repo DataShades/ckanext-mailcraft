@@ -20,6 +20,6 @@ EmailData = TypedDict(
         "Subject": str,
         "To": str,
         "X-Mailer": NotRequired[str],
-        "redirected_from": NotRequired["list[str]"]
+        "redirected_from": NotRequired["list[str]"],
     },
 )

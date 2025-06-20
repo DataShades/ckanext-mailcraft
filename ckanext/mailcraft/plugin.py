@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ckan.types as types
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 from ckan.common import CKANConfig
