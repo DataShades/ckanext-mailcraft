@@ -28,6 +28,9 @@ To use a mailer, you just have to import it.
         ),
     )
 
+> [!IMPORTANT]
+> If you're using environment variables to configure the SMTP server, you must create the mailer instance within a method or function scope; otherwise, the mailer will take the config options from the CKAN config file.
+
 ## Dashboard
 
 The mailcraft dashboard requires the `ckanext-admin-panel` extension to be enabled. Otherwise, there most likely will be
@@ -51,7 +54,7 @@ Use PyPI to install the extension with pip. Or check the Developer installation 
 
 ## Config settings
 
-There's a separate page in admin panel to configure mailcraft settings. Check the `config_declaration.yaml` file. 
+There's a separate page in admin panel to configure mailcraft settings. Check the `config_declaration.yaml` file.
 
 
 ## Developer installation
