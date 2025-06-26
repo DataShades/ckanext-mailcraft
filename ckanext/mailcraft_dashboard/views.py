@@ -136,7 +136,13 @@ def _build_context() -> types.Context:
 
 mailcraft.add_url_rule("/test", view_func=MailTestView.as_view("send_test"))
 mailcraft.add_url_rule(
-    "/dashboard", view_func=DashboardView.as_view("dashboard", table=DashboardTable)
+    "/dashboard",
+    view_func=DashboardView.as_view(
+        "dashboard",
+        table=DashboardTable,
+        breadcrumb_label="Mailcraft dashboard",
+        page_title="Mailcraft dashboard",
+    ),
 )
 mailcraft.add_url_rule(
     "/config",
