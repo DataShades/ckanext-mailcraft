@@ -33,10 +33,22 @@ mailer.mail_recipients(
 )
 ```
 
-## Dashboard
+> [!IMPORTANT]
+> If you're using environment variables to configure the SMTP server, you must create the mailer instance within a method or function scope; otherwise, the mailer will take the config options from the CKAN config file.
 
-The mailcraft dashboard requires the `ckanext-admin-panel` extension to be enabled. Otherwise, there most likely will be
-an exception, cause we're heavily relying on the admin panel and some extra requirements of it.
+## Dashboard
+****
+To access the dashboard, first ensure that the `mailcraft_dashboard` plugin is enabled in your CKAN configuration. Then you'll have a button at the top right of the CKAN interface that will take you to the Mailcraft dashboard.
+
+![dashboard button](doc/button.png)
+
+The dashboard provides an overview of all outgoing emails, including their status (sent, failed, etc.), recipients, and timestamps. You can filter and search through the emails to find specific ones.
+
+![dashboard](doc/dashboard.png)
+
+The `ckanext.mailcraft.save_emails` config option must be set to `true` to save outgoing emails and view them in the dashboard. You can also press the `View` button to see the full content of each email.
+
+![mail body](doc/body.png)
 
 ## Requirements
 

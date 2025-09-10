@@ -7,10 +7,12 @@
 {% endblock breadcrumb_content %}
 
 {% block ap_content %}
-    <a href="{{ h.url_for('mailcraft.dashboard') }}" class="btn btn-default mb-3">
-        <i class="fa fa-arrow-left"></i>
-        {{ _("Back to dashboard") }}
-    </a>
+    <div class="module-content">
+        <a href="{{ h.url_for('mailcraft.dashboard') }}" class="btn btn-default mb-3">
+            <i class="fa fa-arrow-left"></i>
+            {{ _("Back to dashboard") }}
+        </a>
 
-    <p>{{ _("Mail not found") }}</p>
+        <p>{{ _("Mail not found") }}</p>
+    </div>
 {% endblock ap_content %}

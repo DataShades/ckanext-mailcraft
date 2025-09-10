@@ -10,25 +10,38 @@
 {% endblock breadcrumb_content %}
 
 {% block ap_content %}
-    <a href="{{ h.url_for('mailcraft.dashboard') }}" class="btn btn-default mb-3">
-        <i class="fa fa-arrow-left"></i>
-        {{ _("Back to dashboard") }}
-    </a>
+    <div class="module-content">
+        <a href="{{ h.url_for('mailcraft.dashboard') }}" class="btn btn-default mb-3">
+            <i class="fa fa-arrow-left"></i>
+            {{ _("Back to dashboard") }}
+        </a>
 
-    {% if mail.extras %}
-        <div class="mailcraft-mail-meta">
-            <h3>{{ _("Email meta") }}</h3>
-            <ul>
-                {% for key, value in mail.extras.items() %}
-                    <li><b>{{ key }}</b>: {{ value }}</li>
-                {% endfor %}
-            </ul>
+        {% if mail.extras %}
+            <div class="mailcraft-mail-meta">
+                <h3>{{ _("Email meta") }}</h3>
+                <table class="table table-bordered table-header">
+                    <thead>
+                        <tr>
+                            <th>{{ _("Key") }}</th>
+                            <th>{{ _("Value") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key, value in mail.extras.items() %}
+                            <tr>
+                                <td><b>{{ key }}</b></td>
+                                <td>{{ value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        <div class="mailcraft-mail-body">
+            <h3>{{ _("Email body") }}</h3>
+
+            {{ mail.message | safe}}
         </div>
-    {% endif %}
-
-    <div class="mailcraft-mail-body">
-        <h3>{{ _("Email body") }}</h3>
-
-        {{ mail.message | safe}}
     </div>
 {% endblock ap_content %}

@@ -2,29 +2,28 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Blueprint, Response
-from flask.views import MethodView
-
-import ckan.plugins.toolkit as tk
-import ckan.types as types
-
+from ckanext.mailcraft.utils import get_mailer
 from ckanext.mailcraft_dashboard.generics import ApTableView
 from ckanext.mailcraft_dashboard.table import (
     ActionDefinition,
     ColumnDefinition,
     GlobalActionDefinition,
-    TableDefinition,
     GlobalActionHandler,
     GlobalActionHandlerResult,
     Row,
+    TableDefinition,
 )
 
-from ckanext.mailcraft.utils import get_mailer
+import ckan.plugins.toolkit as tk
+from ckan import types
+from flask import Blueprint, Response
+from flask.views import MethodView
 
 mailcraft = Blueprint("mailcraft", __name__, url_prefix="/ckan-admin/mailcraft")
 
 
 def before_request() -> None:
+    """A before request handler to check for sysadmin rights."""
     try:
         tk.check_access("sysadmin", {"user": tk.current_user.name})
     except tk.NotAuthorized:
@@ -32,7 +31,9 @@ def before_request() -> None:
 
 
 class DashboardTable(TableDefinition):
+    """Table definition for the mailcraft dashboard."""
     def __init__(self):
+        """Initialize the table definition."""
         super().__init__(
             name="content",
             ajax_url=tk.url_for("mailcraft.dashboard", data=True),
@@ -77,11 +78,14 @@ class DashboardTable(TableDefinition):
         )
 
     def get_raw_data(self) -> list[dict[str, Any]]:
+        """Fetch raw data for the table."""
         return tk.get_action("mc_mail_list")(_build_context(), {})
 
 
 class DashboardView(ApTableView):
+    """View for the mailcraft dashboard."""
     def get_global_action(self, value: str) -> GlobalActionHandler | None:
+        """Return the handler for a global action."""
         return {"delete": self._remove_emails}.get(value)
 
     @staticmethod
@@ -98,7 +102,9 @@ class DashboardView(ApTableView):
 
 
 class MailReadView(MethodView):
+    """View for reading a single email."""
     def get(self, mail_id: str) -> str:
+        """Render the email reading template."""
         try:
             mail = tk.get_action("mc_mail_show")(_build_context(), {"id": mail_id})
         except tk.ValidationError:
@@ -108,8 +114,32 @@ class MailReadView(MethodView):
 
 
 class MailClearView(MethodView):
+    """View for clearing all emails."""
     def post(self) -> Response:
+        """Clear all emails and redirect to the dashboard."""
         tk.get_action("mc_mail_clear")(_build_context(), {})
+
+        return tk.redirect_to("mailcraft.dashboard")
+
+
+class MailTestView(MethodView):
+    """View for sending a test email."""
+    def post(self) -> Response:
+        """Send a test email and redirect to the dashboard."""
+        mailer = get_mailer()
+
+        mailer.mail_recipients(
+            subject="Hello world",
+            recipients=["test@gmail.com"],
+            body="Hello world",
+            body_html=tk.render(
+                "mailcraft/emails/test.html",
+                extra_vars={
+                    "site_url": mailer.site_url,
+                    "site_title": mailer.site_title,
+                },
+            ),
+        )
 
         return tk.redirect_to("mailcraft.dashboard")
 
@@ -121,30 +151,14 @@ def _build_context() -> types.Context:
     }
 
 
-def send_test_email() -> Response:
-    """Send a test email"""
-    mailer = get_mailer()
-
-    mailer.mail_recipients(
-        subject="Hello world",
-        recipients=["test@gmail.com"],
-        body="Hello world",
-        body_html=tk.render(
-            "mailcraft/emails/test.html",
-            extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
-        ),
-    )
-
-    tk.h.flash_success(tk._("Test email has been sent"))
-
-    return tk.redirect_to("mailcraft.dashboard")
-
-
-mailcraft.before_request(before_request)
-
-mailcraft.add_url_rule("/test", endpoint="test", view_func=send_test_email)
+mailcraft.add_url_rule("/test", view_func=MailTestView.as_view("send_test"))
 mailcraft.add_url_rule(
-    "/dashboard", view_func=DashboardView.as_view("dashboard", table=DashboardTable, breadcrumb_label="Dashboard", page_title="")
+    "/dashboard",
+    view_func=DashboardView.as_view(
+        "dashboard",
+        table=DashboardTable,
+        page_title="",
+    ),
 )
 mailcraft.add_url_rule(
     "/dashboard/read/<mail_id>", view_func=MailReadView.as_view("mail_read")
@@ -152,7 +166,3 @@ mailcraft.add_url_rule(
 mailcraft.add_url_rule(
     "/dashboard/clear", view_func=MailClearView.as_view("clear_mails")
 )
-
-
-def get_blueprints():
-    return [mailcraft]

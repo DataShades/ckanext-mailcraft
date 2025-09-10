@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
 import codecs
-import os
 import logging
 import mimetypes
+import os
 import smtplib
-import socket
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from email import utils as email_utils
 from email.message import EmailMessage
 from time import time
-from typing import Any, Iterable, Optional, cast
+from typing import Any, Optional, cast
 
 import ckan.plugins as p
-import ckan.model as model
 import ckan.plugins.toolkit as tk
+from ckan import model
 
 import ckanext.mailcraft.config as mc_config
 import ckanext.mailcraft_dashboard.model as mc_model
@@ -29,9 +28,14 @@ from ckanext.mailcraft.types import (
 
 log = logging.getLogger(__name__)
 
+ATTACHMENT_WITH_TYPE_LEN = 3
+
 
 class BaseMailer(ABC):
+    """Base class for mailers."""
+
     def __init__(self):
+        """Initialize the mailer with SMTP settings from CKAN config."""
         self.server = tk.config["smtp.server"]
         self.start_tls = tk.asbool(tk.config["smtp.starttls"])
         self.user = tk.config["smtp.user"]
@@ -48,61 +52,63 @@ class BaseMailer(ABC):
         self.redirect_to = mc_config.get_redirect_email()
 
     @abstractmethod
-    def mail_recipients(
+    def mail_recipients(  # noqa: PLR0913
         self,
         subject: str,
         recipients: list[str],
         body: str,
         body_html: str,
-        headers: Optional[dict[str, Any]] = None,
-        attachments: Optional[Iterable[Attachment]] = None,
-        to: Optional[list[str]] = None,
+        headers: dict[str, Any] | None = None,
+        attachments: Iterable[Attachment] | None = None,
+        to: list[str] | None = None,
     ):
-        pass
+        """Send an email to a list of recipients."""
 
     @abstractmethod
-    def add_attachments(self, msg: EmailMessage, attachments) -> None:
-        pass
+    def add_attachments(
+        self, msg: EmailMessage, attachments: Iterable[Attachment]
+    ) -> None:
+        """Add attachments to the email message."""
 
     @abstractmethod
     def get_connection(self) -> smtplib.SMTP:
-        pass
+        """Get an SMTP connection object."""
 
     @abstractmethod
     def test_conn(self):
-        pass
+        """Test the SMTP connection."""
 
     @abstractmethod
-    def mail_user(
+    def mail_user(  # noqa: PLR0913
         self,
         user: str,
         subject: str,
         body: str,
         body_html: str,
-        headers: Optional[dict[str, Any]] = None,
-        attachments: Optional[Iterable[Attachment]] = None,
+        headers: dict[str, Any] | None = None,
+        attachments: Iterable[Attachment] | None = None,
     ) -> None:
-        pass
+        """Send an email to a CKAN user by their ID or name."""
 
 
 class DefaultMailer(BaseMailer):
-    def mail_recipients(
+    """Default mailer implementation."""
+    def mail_recipients(  # noqa: PLR0913, C901
         self,
         subject: str,
         recipients: list[str],
         body: str,
         body_html: str,
-        headers: Optional[dict[str, Any]] = None,
-        attachments: Optional[Iterable[Attachment]] = None,
-        to: Optional[list[str]] = None,
+        headers: dict[str, Any] | None = None,
+        attachments: Iterable[Attachment] | None = None,
+        to: list[str] | None = None,
     ):
+        """Send an email to a list of recipients."""
         headers = headers or {}
         attachments = attachments or []
 
         if self.redirect_to:
-            log.info(
-                f"Redirecting email to {self.redirect_to} instead of {recipients}"
-            )
+            log.info("Redirecting email to %s instead of %s", self.redirect_to, recipients)
             recipients = self.redirect_to
 
         msg = EmailMessage()
@@ -110,17 +116,14 @@ class DefaultMailer(BaseMailer):
         msg["From"] = email_utils.formataddr((self.site_title, self.mail_from))
         msg["Subject"] = subject
         msg["Date"] = email_utils.formatdate(time())
+        msg["To"] = ", ".join(to) if to else  ", ".join(recipients)
 
-        if to:
-            msg["To"] = msg["Bcc"] = ", ".join(to)
-        else:
-            msg["To"] = msg["Bcc"] = ", ".join(recipients)
 
         if not tk.config.get("ckan.hide_version"):
             msg["X-Mailer"] = f"CKAN {tk.h.ckan_version()}"
 
         for k, v in headers.items():
-            msg.replace_header(k, v) if k in msg.keys() else msg.add_header(k, v)
+            msg.replace_header(k, v) if k in msg else msg.add_header(k, v)
 
         # Assign Reply-to if configured and not set via headers
         if self.reply_to and not msg["Reply-to"]:
@@ -138,25 +141,20 @@ class DefaultMailer(BaseMailer):
             if self.stop_outgoing:
                 self._save_email(email_data, body_html, mc_model.Email.State.stopped)
             else:
-                if recipients := mc_config.get_redirect_email():
-                    email_data["redirected_from"] = recipients
-                    recipients = recipients
-                    email_data["To"] = email_data["Bcc"] = ", ".join(recipients)
-
                 self._send_email(recipients, msg)
-        except MailerException as e:
-            log.error(f"Error sending email to {recipients}: {e}")
+        except MailerException:
+            log.exception("Error sending email to %s", recipients)
             self._save_email(email_data, body_html, mc_model.Email.State.failed)
         else:
             if not self.stop_outgoing:
                 self._save_email(email_data, body_html)
 
-    def add_attachments(self, msg: EmailMessage, attachments) -> None:
-        """Add attachments on an email message
-        If attachment length is 3, it means, that this is an attachment with type"""
-
+    def add_attachments(
+        self, msg: EmailMessage, attachments: Iterable[Attachment]
+    ) -> None:
+        """Add attachments to the email message."""
         for attachment in attachments:
-            if len(attachment) == 3:
+            if len(attachment) == ATTACHMENT_WITH_TYPE_LEN:
                 name, _file, media_type = cast(AttachmentWithType, attachment)
             else:
                 name, _file = cast(AttachmentWithoutType, attachment)
@@ -175,14 +173,14 @@ class DefaultMailer(BaseMailer):
             )
 
     def get_connection(self) -> smtplib.SMTP:
-        """Get an SMTP conn object"""
+        """Get an SMTP conn object."""
         try:
             conn = smtplib.SMTP(self.server, timeout=self.conn_timeout)
-        except (socket.error, smtplib.SMTPConnectError) as e:
-            log.exception(e)
-            raise MailerException(
-                f'SMTP server could not be connected to: "{self.server}" {e}'
-            )
+        except OSError as e:
+            log.exception('SMTP server could not be connected to: "%s"', self.server)
+            raise MailerException(  # noqa: TRY003
+                'SMTP server could not be connected to: "%s" %s', self.server, e
+            ) from e
 
         try:
             conn.ehlo()
@@ -192,17 +190,13 @@ class DefaultMailer(BaseMailer):
                     conn.starttls()
                     conn.ehlo()
                 else:
-                    raise MailerException("SMTP server does not support STARTTLS")
+                    raise MailerException("SMTP server does not support STARTTLS") # noqa: TRY003
 
             if self.user:
-                assert self.password, (
-                    "If smtp.user is configured then "
-                    "smtp.password must be configured as well."
-                )
                 conn.login(self.user, self.password)
         except smtplib.SMTPException as e:
-            log.exception(f"{e}")
-            raise MailerException(f"{e}")
+            log.exception("An error occurred during SMTP authentication")
+            raise MailerException(f"{e}") from e
 
         return conn
 
@@ -217,32 +211,33 @@ class DefaultMailer(BaseMailer):
 
         mc_model.Email.save_mail(email_data, body_html, state)
 
-    def _send_email(self, recipients, msg: EmailMessage):
+    def _send_email(self, recipients: list[str], msg: EmailMessage):
         conn = self.get_connection()
 
         try:
             conn.sendmail(self.mail_from, recipients, msg.as_string())
-            log.info(f"Sent email to {recipients}")
+            log.info("Sent email to %s", recipients)
         except smtplib.SMTPException as e:
-            log.exception(f"{e}")
-            raise MailerException(f"{e}")
+            log.exception("Error sending email: %s")
+            raise MailerException("Error sending email: %s", e) from e # noqa: TRY003
         finally:
             conn.quit()
 
     def test_conn(self):
+        """Test the SMTP connection."""
         conn = self.get_connection()
         conn.quit()
 
-    def mail_user(
+    def mail_user(  # noqa: PLR0913
         self,
         user: str,
         subject: str,
         body: str,
         body_html: str,
-        headers: Optional[dict[str, Any]] = None,
-        attachments: Optional[Iterable[Attachment]] = None,
+        headers: dict[str, Any] | None = None,
+        attachments: Iterable[Attachment] | None = None,
     ) -> None:
-        """Sends an email to a CKAN user by its ID or name"""
+        """Sends an email to a CKAN user by its ID or name."""
         user_obj = model.User.get(user)
 
         if not user_obj:
@@ -261,6 +256,11 @@ class DefaultMailer(BaseMailer):
         )
 
     def send_reset_link(self, user: model.User) -> None:
+        """Sends a password reset link to a user.
+
+        Args:
+            user: The user to send the reset link to.
+        """
         self.create_reset_key(user)
         extra_vars = {
             "reset_link": tk.h.url_for(
@@ -285,12 +285,13 @@ class DefaultMailer(BaseMailer):
         )
 
     def create_reset_key(self, user: model.User):
+        """Creates a reset key for a user and saves it to the database."""
         user.reset_key = codecs.encode(os.urandom(16), "hex").decode()
         model.repo.commit_and_remove()
 
-    def verify_reset_link(self, user: model.User, key: Optional[str]) -> bool:
-        if not key:
+    def verify_reset_link(self, user: model.User, key: str | None) -> bool:
+        """Verifies if the reset key is valid for the user."""
+        if not key or not user.reset_key:
             return False
-        if not user.reset_key or len(user.reset_key) < 5:
-            return False
+
         return key.strip() == user.reset_key

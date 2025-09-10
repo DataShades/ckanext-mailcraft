@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from abc import abstractmethod
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import datetime
+from typing import Any, TypeAlias
 
-from typing_extensions import TypeAlias
 import ckan.plugins.toolkit as tk
 
 Value: TypeAlias = Any
@@ -62,7 +62,6 @@ def actions(
     Options:
         - `template` (str) - template to render the actions.
     """
-
     template = options.get("template", "mailcraft/tables/formatters/actions.html")
 
     return tk.literal(
@@ -74,9 +73,9 @@ def actions(
 
 
 class TableDefinition:
-    """Defines a table to be rendered with Tabulator"""
+    """Defines a table to be rendered with Tabulator."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         name: str,
         ajax_url: str,
@@ -90,8 +89,7 @@ class TableDefinition:
         table_action_snippet: str | None = None,
         table_template: str = "mailcraft/tables/table_base.html",
     ):
-        """
-        Initialize a table definition
+        """Initialize a table definition.
 
         Args:
             name (str): Unique identifier for the table
@@ -104,7 +102,7 @@ class TableDefinition:
             page_size (int): Number of rows per page
             selectable (bool): Whether rows can be selected
             table_action_snippet (str, optional): Snippet to render table actions
-            template (str, optional): Template to render the table
+            table_template (str, optional): Template to render the table
         """
         self.id = f"table_{name}_{uuid.uuid4().hex[:8]}"
         self.name = name
@@ -112,7 +110,7 @@ class TableDefinition:
         self.columns = columns or []
         self.actions = actions or []
         self.global_actions = global_actions or []
-        self.placeholder = placeholder or "No data found"
+        self.placeholder = placeholder or "No emails found"
         self.pagination = pagination
         self.page_size = page_size
         self.selectable = True if self.global_actions else selectable
@@ -120,6 +118,7 @@ class TableDefinition:
         self.table_template = table_template
 
     def get_tabulator_config(self) -> dict[str, Any]:
+        """Return the Tabulator configuration for the table."""
         columns = [col.to_dict() for col in self.columns]
 
         options = {
@@ -143,30 +142,29 @@ class TableDefinition:
         return options
 
     def render_table(self, **kwargs: Any) -> str:
-        """Render the table template with the necessary data"""
-
+        """Render the table template with the necessary data."""
         return tk.render(self.table_template, extra_vars={"table": self, **kwargs})
 
     @abstractmethod
     def get_raw_data(self) -> list[dict[str, Any]]:
-        """Return the list of rows to be rendered in the table
+        """Return the list of rows to be rendered in the table.
 
         Returns:
             list[dict[str, Any]]: List of rows to be rendered in the table
         """
 
     def get_data(self) -> list[Any]:
-        """Get the data for the table with applied formatters"""
+        """Get the data for the table with applied formatters."""
         self._formatters = self.get_formatters()
 
         return [self.apply_formatters(dict(row)) for row in self.get_raw_data()]
 
     def get_formatters(self) -> dict[str, Callable[..., Any]]:
-        """Return a dict of available formatters"""
+        """Return a dict of available formatters."""
         return {"date": date, "actions": actions}
 
     def apply_formatters(self, row: dict[str, Any]) -> dict[str, Any]:
-        """Apply formatters to each cell in a row"""
+        """Apply formatters to each cell in a row."""
         for column in self.columns:
             cell_value = row.get(column.field)
 
@@ -186,9 +184,9 @@ class TableDefinition:
 
 
 class ColumnDefinition:
-    """Defines how a column should be rendered in Tabulator"""
+    """Defines how a column should be rendered in Tabulator."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         field: str,
         title: str | None = None,
@@ -202,8 +200,7 @@ class ColumnDefinition:
         filterable: bool = True,
         resizable: bool = True,
     ):
-        """
-        Initialize a column definition
+        """Initialize a column definition.
 
         Args:
             field (str): The field name in the data dict
@@ -231,10 +228,11 @@ class ColumnDefinition:
         self.resizable = resizable
 
     def __repr__(self):
+        """String representation of the column definition."""
         return f"ColumnDefinition(field={self.field}, title={self.title})"
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert the column definition to a dict for JSON serialization"""
+        """Convert the column definition to a dict for JSON serialization."""
         result = {
             "field": self.field,
             "title": self.title,
@@ -263,9 +261,9 @@ class ColumnDefinition:
 
 
 class ActionDefinition:
-    """Defines an action that can be performed on a row"""
+    """Defines an action that can be performed on a row."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         name: str,
         label: str | None = None,
@@ -277,8 +275,7 @@ class ActionDefinition:
         visible_callback: Callable[..., bool] | None = None,
         attrs: dict[str, Any] | None = None,
     ):
-        """
-        Initialize an action definition
+        """Initialize an action definition.
 
         Args:
             name (str): Unique identifier for the action
@@ -302,9 +299,11 @@ class ActionDefinition:
         self.attrs = attrs or {}
 
     def __repr__(self):
+        """String representation of the action definition."""
         return f"ActionDefinition(name={self.name})"
 
-    def to_dict(self, row_data=None):
+    def to_dict(self, row_data: Any | None = None):
+        """Convert the action definition to a dict for JSON serialization."""
         # Check if action should be visible for this row
         if self.visible_callback and row_data and not self.visible_callback(row_data):
             return None
@@ -325,15 +324,14 @@ class ActionDefinition:
 
 
 class GlobalActionDefinition:
-    """Defines an action that can be performed on multiple rows"""
+    """Defines an action that can be performed on multiple rows."""
 
     def __init__(
         self,
         action: str,
         label: str,
     ):
-        """
-        Initialize a global action definition
+        """Initialize a global action definition.
 
         Args:
             action (str): Unique identifier for the action
@@ -343,9 +341,11 @@ class GlobalActionDefinition:
         self.label = label
 
     def __repr__(self):
+        """String representation of the global action definition."""
         return f"GlobalActionDefinition(action={self.action}, label={self.label})"
 
     def to_dict(self):
+        """Convert the global action definition to a dict."""
         return {
             "action": self.action,
             "label": self.label,

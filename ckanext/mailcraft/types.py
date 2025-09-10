@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import IO, Tuple, Union
+from typing import IO
+
 from typing_extensions import NotRequired, TypedDict
 
-
-AttachmentWithType = Union[Tuple[str, IO[str], str], Tuple[str, IO[bytes], str]]
-AttachmentWithoutType = Union[Tuple[str, IO[str]], Tuple[str, IO[bytes]]]
-Attachment = Union[AttachmentWithType, AttachmentWithoutType]
+AttachmentWithType = tuple[str, IO[str], str] | tuple[str, IO[bytes], str]
+AttachmentWithoutType = tuple[str, IO[str]] | tuple[str, IO[bytes]]
+Attachment = AttachmentWithType | AttachmentWithoutType
 
 
 EmailData = TypedDict(
