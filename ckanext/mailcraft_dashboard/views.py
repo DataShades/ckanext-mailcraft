@@ -8,20 +8,27 @@ from flask.views import MethodView
 import ckan.plugins.toolkit as tk
 import ckan.types as types
 
-from ckanext.ap_main.utils import ap_before_request
-from ckanext.ap_main.views.generics import ApConfigurationPageView, ApTableView
-import ckanext.ap_main.types as ap_types
-from ckanext.ap_main.table import (
+from ckanext.mailcraft_dashboard.generics import ApTableView
+from ckanext.mailcraft_dashboard.table import (
     ActionDefinition,
     ColumnDefinition,
     GlobalActionDefinition,
     TableDefinition,
+    GlobalActionHandler,
+    GlobalActionHandlerResult,
+    Row,
 )
 
 from ckanext.mailcraft.utils import get_mailer
 
-mailcraft = Blueprint("mailcraft", __name__, url_prefix="/admin-panel/mailcraft")
-mailcraft.before_request(ap_before_request)
+mailcraft = Blueprint("mailcraft", __name__, url_prefix="/ckan-admin/mailcraft")
+
+
+def before_request() -> None:
+    try:
+        tk.check_access("sysadmin", {"user": tk.current_user.name})
+    except tk.NotAuthorized:
+        tk.abort(403, tk._("Need to be system administrator to administer"))
 
 
 class DashboardTable(TableDefinition):
@@ -74,11 +81,11 @@ class DashboardTable(TableDefinition):
 
 
 class DashboardView(ApTableView):
-    def get_global_action(self, value: str) -> ap_types.GlobalActionHandler | None:
+    def get_global_action(self, value: str) -> GlobalActionHandler | None:
         return {"delete": self._remove_emails}.get(value)
 
     @staticmethod
-    def _remove_emails(row: ap_types.Row) -> ap_types.GlobalActionHandlerResult:
+    def _remove_emails(row: Row) -> GlobalActionHandlerResult:
         try:
             tk.get_action("mc_mail_delete")(
                 {"ignore_auth": True},
@@ -101,10 +108,10 @@ class MailReadView(MethodView):
 
 
 class MailClearView(MethodView):
-    def post(self) -> str:
+    def post(self) -> Response:
         tk.get_action("mc_mail_clear")(_build_context(), {})
 
-        return ""
+        return tk.redirect_to("mailcraft.dashboard")
 
 
 def _build_context() -> types.Context:
@@ -133,13 +140,11 @@ def send_test_email() -> Response:
     return tk.redirect_to("mailcraft.dashboard")
 
 
+mailcraft.before_request(before_request)
+
 mailcraft.add_url_rule("/test", endpoint="test", view_func=send_test_email)
 mailcraft.add_url_rule(
-    "/dashboard", view_func=DashboardView.as_view("dashboard", table=DashboardTable)
-)
-mailcraft.add_url_rule(
-    "/config",
-    view_func=ApConfigurationPageView.as_view("config", "mailcraft_config"),
+    "/dashboard", view_func=DashboardView.as_view("dashboard", table=DashboardTable, breadcrumb_label="Dashboard", page_title="")
 )
 mailcraft.add_url_rule(
     "/dashboard/read/<mail_id>", view_func=MailReadView.as_view("mail_read")

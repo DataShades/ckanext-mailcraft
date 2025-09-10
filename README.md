@@ -2,31 +2,36 @@
 
 # ckanext-mailcraft
 
-The `ckanext-mailcraft` extension provides next features:
-- A custom mailer that can be conveniently expanded as needed
-- Prestyled email template
-- A dashboard where you can view a list of all sent e-mails
-- A function of stopping the sending of all emails sent through our mailer in order to debug the functionality.
+The `ckanext-mailcraft` adds powerful email management features to CKAN, making it easier to style, track, and control outgoing messages.
+
+**Features**
+- Flexible Mailer – a custom mailer that can be easily extended to fit your needs
+- Pre-styled Templates – an example email template you can customize to match your branding
+- Email Logging – configurable option to save outgoing emails and view them in the dashboard
+- Email Control – configurable option to temporarily stop outgoing messages when needed
+- Redirection – configurable option to reroute all outgoing emails to one or more specified addresses
 
 To enable the extension, add `mailcraft` to the `ckan.plugins` setting in your CKAN.
 If you want to enable the dashboard you should also add `mailcraft_dashboard` to the `ckan.plugins` setting.
 
 ## Usage
-To use a mailer, you just have to import it.
+To use a mailer, you just have to import it and initialize the mailer.
 
-    from ckanext.mailcraft.utils import get_mailer
+```python
+from ckanext.mailcraft.utils import get_mailer
 
-    mailer = get_mailer()
+mailer = get_mailer()
 
-    mailer.mail_recipients(
-        subject="Hello world",
-        recipients=["test@gmail.com"],
-        body="Hello world",
-        body_html=tk.render(
-            "mailcraft/emails/test.html",
-            extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
-        ),
-    )
+mailer.mail_recipients(
+    subject="Hello world",
+    recipients=["test@gmail.com"],
+    body="Hello world",
+    body_html=tk.render(
+        "mailcraft/emails/test.html",
+        extra_vars={"site_url": mailer.site_url, "site_title": mailer.site_title},
+    ),
+)
+```
 
 ## Dashboard
 
@@ -39,7 +44,6 @@ Compatibility with core CKAN versions:
 
 | CKAN version    | Compatible?   |
 | --------------- | ------------- |
-
 | 2.9 and earlier | no            |
 | 2.10+           | yes           |
 
@@ -48,28 +52,40 @@ Compatibility with core CKAN versions:
 
 Use PyPI to install the extension with pip. Or check the Developer installation section.
 
+```sh
+pip install ckanext-mailcraft
+```
 
 ## Config settings
 
-There's a separate page in admin panel to configure mailcraft settings. Check the `config_declaration.yaml` file. 
-
+Check the [config_declaration.yaml](ckanext/mailcraft/config_declaration.yaml) file to see all available config settings.
 
 ## Developer installation
 
 To install ckanext-mailcraft for development, activate your CKAN virtualenv and
 do:
 
-    git clone https://github.com/DataShades/ckanext-mailcraft.git
-    cd ckanext-mailcraft
-    python setup.py develop
-    pip install -r dev-requirements.txt
+```sh
+git clone https://github.com/DataShades/ckanext-mailcraft.git
+cd ckanext-mailcraft
+python setup.py develop
+pip install -r dev-requirements.txt
+```
 
+## Build CSS
+
+Run this command from the `theme` folder.
+
+```sh
+npx sass styles.scss:./../assets/css/style.css -s compressed --no-source-map
+```
 
 ## Tests
 
 To run the tests, do:
-    pytest --ckan-ini=test.ini
-
+```sh
+pytest --ckan-ini=test.ini
+```
 
 ## License
 

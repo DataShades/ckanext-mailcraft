@@ -1,0 +1,20 @@
+
+mc-dashboard-js:
+  filter: rjsmin
+  output: ckanext-mailcraft/%(version)s-mc-dashboard.js
+  contents:
+    - js/vendor/tabulator.min.js
+    - js/mc-tabulator.js
+    - js/mc-htmx.js
+
+  extra:
+    preload:
+      - base/main
+
+mc-dashboard-css:
+  output: ckanext-mailcraft/%(version)s-mc-dashboard.css
+  contents:
+    - css/vendor/tabulator.min.css
+    - css/vendor/tabulator-theme.min.css
+
+    - css/style.css

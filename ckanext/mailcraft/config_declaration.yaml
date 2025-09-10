@@ -4,28 +4,30 @@ groups:
     options:
       - key: ckanext.mailcraft.test_conn_on_startup
         type: bool
-        description: Specify do we want to check an SMTP conn on CKAN startup
+        description: Check SMTP connection when CKAN starts
         default: false
         editable: true
 
       - key: ckanext.mailcraft.conn_timeout
         type: int
-        description: Specify a timeout for an SMTP connection
+        description: Timeout (in seconds) for establishing an SMTP connection
         default: 10
         editable: true
 
       - key: ckanext.mailcraft.stop_outgoing_emails
         type: bool
-        description: Specify if we are stopping outgoing emails. In this case, we are only saving it to dashboard
+        description: If enabled, outgoing emails will not be sent
         default: false
         editable: true
 
       - key: ckanext.mailcraft.save_emails
         type: bool
-        description: Specify if we are saving emails to database
+        description: Save outgoing emails to the database
         default: false
         editable: true
 
       - key: ckanext.mailcraft.redirect_emails_to
-        description: Redirect outgoing emails to a specified email
+        description: Redirect outgoing emails to a specified email addresses
         editable: true
+        type: list
+        example: john@example.com alice@example.com

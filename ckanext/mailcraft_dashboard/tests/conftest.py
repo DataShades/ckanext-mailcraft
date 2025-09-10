@@ -12,7 +12,7 @@ fake = Faker()
 
 @register(_name="email")
 class EmailFactory(factories.CKANFactory):
-    class Meta:
+    class Meta:  # type: ignore
         model = Email
         action = "mc_mail_create"
 

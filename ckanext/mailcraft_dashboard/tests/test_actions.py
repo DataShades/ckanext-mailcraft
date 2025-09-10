@@ -59,7 +59,5 @@ class TestClearMails:
             email_factory()
 
         assert len(call_action("mc_mail_list")) == 10
-
         assert call_action("mc_mail_clear")["deleted"] == 10
-
         assert call_action("mc_mail_list") == []

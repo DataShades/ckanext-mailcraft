@@ -1,0 +1,10 @@
+{% extends "mailcraft/base.html" %}
+
+{% block breadcrumb_content %}
+    <li class="active">{% link_for _("Dashboard"), named_route='mailcraft.dashboard' %}</li>
+{% endblock %}
+
+{% block ap_content %}
+    <h1>{{ _(page_title) if page_title else "" }}</h1>
+    {% snippet "mailcraft/tables/table_inner.html", table=table %}
+{% endblock %}

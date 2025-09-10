@@ -99,11 +99,18 @@ class DefaultMailer(BaseMailer):
         headers = headers or {}
         attachments = attachments or []
 
+        if self.redirect_to:
+            log.info(
+                f"Redirecting email to {self.redirect_to} instead of {recipients}"
+            )
+            recipients = self.redirect_to
+
         msg = EmailMessage()
 
         msg["From"] = email_utils.formataddr((self.site_title, self.mail_from))
         msg["Subject"] = subject
         msg["Date"] = email_utils.formatdate(time())
+
         if to:
             msg["To"] = msg["Bcc"] = ", ".join(to)
         else:
@@ -131,9 +138,9 @@ class DefaultMailer(BaseMailer):
             if self.stop_outgoing:
                 self._save_email(email_data, body_html, mc_model.Email.State.stopped)
             else:
-                if recipient := mc_config.get_redirect_email():
+                if recipients := mc_config.get_redirect_email():
                     email_data["redirected_from"] = recipients
-                    recipients = [recipient]
+                    recipients = recipients
                     email_data["To"] = email_data["Bcc"] = ", ".join(recipients)
 
                 self._send_email(recipients, msg)
@@ -266,7 +273,7 @@ class DefaultMailer(BaseMailer):
 
         self.mail_user(
             user=user.name,
-            subject=f"Reset your password",
+            subject="Reset your password",
             body=tk.render(
                 "mailcraft/emails/reset_password/body.txt",
                 extra_vars,

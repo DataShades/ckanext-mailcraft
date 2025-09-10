@@ -47,6 +47,6 @@ def get_mail_per_page() -> int:
     return tk.asint(tk.config.get(CONF_MAIL_PER_PAGE) or DEF_MAIL_PER_PAGE)
 
 
-def get_redirect_email() -> str | None:
+def get_redirect_email() -> list[str]:
     """Redirect outgoing emails to a specified email"""
-    return tk.config.get(CONF_REDIRECT_EMAILS_TO)
+    return tk.config.get(CONF_REDIRECT_EMAILS_TO, [])
