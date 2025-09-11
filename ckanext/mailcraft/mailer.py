@@ -5,6 +5,7 @@ import logging
 import mimetypes
 import os
 import smtplib
+import base64
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from email import utils as email_utils
@@ -19,7 +20,7 @@ from ckan import model
 import ckanext.mailcraft.config as mc_config
 import ckanext.mailcraft_dashboard.model as mc_model
 from ckanext.mailcraft.exception import MailerException
-from ckanext.mailcraft.types import Attachment, EmailData
+from ckanext.mailcraft.types import Attachment, AttachmentData, EmailData
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class BaseMailer(ABC):
         self.stop_outgoing = mc_config.stop_outgoing_emails()
         self.save_emails = mc_config.save_emails_to_db()
         self.redirect_to = mc_config.get_redirect_email()
+        self.store_att_content = mc_config.store_attachments_content()
 
     @abstractmethod
     def mail_recipients(  # noqa: PLR0913
@@ -130,20 +132,18 @@ class DefaultMailer(BaseMailer):
         if attachments:
             self.add_attachments(msg, attachments)
 
-        email_data: EmailData = dict(msg.items())  # type: ignore
-
         try:
             if self.stop_outgoing:
-                self._save_email(email_data, body_html, mc_model.Email.State.stopped)
+                self._save_email(msg, body_html, mc_model.Email.State.stopped)
             else:
                 self._send_email(recipients, msg)
         except MailerException:
             log.exception("Error sending email to %s", recipients)
-            self._save_email(email_data, body_html, mc_model.Email.State.failed)
+            self._save_email(msg, body_html, mc_model.Email.State.failed)
             return False
         else:
             if not self.stop_outgoing:
-                self._save_email(email_data, body_html)
+                self._save_email(msg, body_html)
 
         return True
 
@@ -176,6 +176,35 @@ class DefaultMailer(BaseMailer):
                 cid=cid if cid else None,
             )
 
+    def collect_attachments(self, msg: EmailMessage) -> list[AttachmentData]:
+        """Collect attachments from the email message."""
+        attachments = []
+        for part in msg.walk():
+            if part.is_multipart():
+                continue
+
+            filename = part.get_filename()
+
+            if not filename:
+                continue
+
+            content_id = part.get("Content-ID")
+            disposition = part.get_content_disposition()
+            content_type = part.get_content_type()
+            payload = part.get_payload(decode=True)
+
+            attachments.append(
+                AttachmentData(
+                    filename=filename if filename else "unknown",
+                    content_id=content_id,
+                    disposition=disposition or "attachment",
+                    content_type=content_type,
+                    size=len(payload) if payload else 0,
+                    data=base64.b64encode(payload).decode("utf-8") if self.store_att_content else None,  # type: ignore
+                )
+            )
+        return attachments
+
     def get_connection(self) -> smtplib.SMTP:
         """Get an SMTP conn object."""
         try:
@@ -194,9 +223,9 @@ class DefaultMailer(BaseMailer):
                     conn.starttls()
                     conn.ehlo()
                 else:
-                    raise MailerException(
+                    raise MailerException(  # noqa: TRY003
                         "SMTP server does not support STARTTLS"
-                    )  # noqa: TRY003
+                    )
 
             if self.user:
                 conn.login(self.user, self.password)
@@ -208,12 +237,16 @@ class DefaultMailer(BaseMailer):
 
     def _save_email(
         self,
-        email_data: EmailData,
+        msg: EmailMessage,
         body_html: str,
         state: str = mc_model.Email.State.success,
     ) -> None:
         if not p.plugin_loaded("mailcraft_dashboard") or not self.save_emails:
             return
+
+        attachments_data = self.collect_attachments(msg)
+        email_data: EmailData = dict(msg.items())  # type: ignore
+        email_data["attachments"] = attachments_data
 
         mc_model.Email.save_mail(email_data, body_html, state)
 

@@ -15,6 +15,17 @@ class Attachment(TypedDict):
     disposition: NotRequired[str]
 
 
+class AttachmentData(TypedDict):
+    """Attachment data structure."""
+
+    filename: str
+    content_id: NotRequired[str | None]
+    disposition: str
+    content_type: str
+    size: int
+    data: NotRequired[bytes | None]
+
+
 EmailData = TypedDict(
     "EmailData",
     {
@@ -27,5 +38,6 @@ EmailData = TypedDict(
         "To": str,
         "X-Mailer": NotRequired[str],
         "redirected_from": NotRequired["list[str]"],
+        "attachments": NotRequired["list[AttachmentData]"],
     },
 )

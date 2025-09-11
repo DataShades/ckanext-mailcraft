@@ -1,4 +1,4 @@
-"""Add mailcraft_mail table
+"""Add mailcraft_mail table.
 
 Revision ID: 9f83e5bfff72
 Revises:
@@ -7,7 +7,6 @@ Create Date: 2023-09-14 11:53:58.371935
 """
 
 import sqlalchemy as sa
-
 from alembic import op
 from sqlalchemy.dialects import postgresql
 

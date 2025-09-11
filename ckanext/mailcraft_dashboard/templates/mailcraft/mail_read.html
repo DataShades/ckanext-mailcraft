@@ -16,6 +16,8 @@
             {{ _("Back to dashboard") }}
         </a>
 
+        {% set attachments = mail.extras.pop("attachments", None) %}
+
         {% if mail.extras %}
             <div class="mailcraft-mail-meta">
                 <h3>{{ _("Email meta") }}</h3>
@@ -31,6 +33,40 @@
                             <tr>
                                 <td><b>{{ key }}</b></td>
                                 <td>{{ value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if attachments %}
+            <div class="mailcraft-mail-attachments">
+                <h3>{{ _("Attachments") }}</h3>
+                <table class="table table-bordered table-header">
+                    <thead>
+                        <tr>
+                            <th>{{ _("Filename") }}</th>
+                            <th>{{ _("Content Type") }}</th>
+                            <th>{{ _("Size (bytes)") }}</th>
+                            <th>{{ _("Content ID") }}</th>
+                            <th>{{ _("Disposition") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for att in attachments %}
+                            <tr>
+                                <td>
+                                    {% if att.data %}
+                                        <a href="data:{{ att.content_type }};base64,{{ att.data }}" download="{{ att.filename }}">{{ att.filename }}</a>
+                                    {% else %}
+                                        {{ att.filename }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ att.content_type }}</td>
+                                <td>{{ att.size }}</td>
+                                <td>{{ att.content_id or "" }}</td>
+                                <td>{{ att.disposition or "" }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

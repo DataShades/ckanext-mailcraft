@@ -31,3 +31,9 @@ groups:
         editable: true
         type: list
         example: john@example.com alice@example.com
+
+      - key: ckanext.mailcraft.store_attachment_content
+        type: bool
+        description: If enabled, the content of email attachments will be stored in the database
+        default: false
+        editable: true
