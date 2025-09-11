@@ -1,12 +1,13 @@
 # encoding: utf-8
 
 import base64
-import pytest
+import email.utils
 import io
 from email.header import decode_header
 from email.mime.text import MIMEText
 from email.parser import Parser
-import email.utils
+
+import pytest
 
 import ckan.lib.helpers as h
 import ckan.lib.mailer as mailer
@@ -18,8 +19,7 @@ from ckan.common import config
 class MailerBase(object):
     def mime_encode(self, msg, recipient_name, subtype="plain"):
         text = MIMEText(msg.encode("utf-8"), subtype, "utf-8")
-        encoded_body = text.get_payload().strip()
-        return encoded_body
+        return text.get_payload().strip()
 
     def get_email_body(self, msg):
         payload = Parser().parsestr(msg).get_payload()

@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from email import utils as email_utils
 from email.message import EmailMessage
 from time import time
-from typing import Any, Optional, cast
+from typing import Any
 
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
@@ -19,16 +19,9 @@ from ckan import model
 import ckanext.mailcraft.config as mc_config
 import ckanext.mailcraft_dashboard.model as mc_model
 from ckanext.mailcraft.exception import MailerException
-from ckanext.mailcraft.types import (
-    Attachment,
-    AttachmentWithoutType,
-    AttachmentWithType,
-    EmailData,
-)
+from ckanext.mailcraft.types import Attachment, EmailData
 
 log = logging.getLogger(__name__)
-
-ATTACHMENT_WITH_TYPE_LEN = 3
 
 
 class BaseMailer(ABC):
@@ -61,7 +54,7 @@ class BaseMailer(ABC):
         headers: dict[str, Any] | None = None,
         attachments: Iterable[Attachment] | None = None,
         to: list[str] | None = None,
-    ):
+    ) -> bool:
         """Send an email to a list of recipients."""
 
     @abstractmethod
@@ -87,12 +80,13 @@ class BaseMailer(ABC):
         body_html: str,
         headers: dict[str, Any] | None = None,
         attachments: Iterable[Attachment] | None = None,
-    ) -> None:
+    ) -> bool:
         """Send an email to a CKAN user by their ID or name."""
 
 
 class DefaultMailer(BaseMailer):
     """Default mailer implementation."""
+
     def mail_recipients(  # noqa: PLR0913, C901
         self,
         subject: str,
@@ -102,13 +96,15 @@ class DefaultMailer(BaseMailer):
         headers: dict[str, Any] | None = None,
         attachments: Iterable[Attachment] | None = None,
         to: list[str] | None = None,
-    ):
+    ) -> bool:
         """Send an email to a list of recipients."""
         headers = headers or {}
         attachments = attachments or []
 
         if self.redirect_to:
-            log.info("Redirecting email to %s instead of %s", self.redirect_to, recipients)
+            log.info(
+                "Redirecting email to %s instead of %s", self.redirect_to, recipients
+            )
             recipients = self.redirect_to
 
         msg = EmailMessage()
@@ -116,8 +112,7 @@ class DefaultMailer(BaseMailer):
         msg["From"] = email_utils.formataddr((self.site_title, self.mail_from))
         msg["Subject"] = subject
         msg["Date"] = email_utils.formatdate(time())
-        msg["To"] = ", ".join(to) if to else  ", ".join(recipients)
-
+        msg["To"] = ", ".join(to) if to else ", ".join(recipients)
 
         if not tk.config.get("ckan.hide_version"):
             msg["X-Mailer"] = f"CKAN {tk.h.ckan_version()}"
@@ -145,31 +140,40 @@ class DefaultMailer(BaseMailer):
         except MailerException:
             log.exception("Error sending email to %s", recipients)
             self._save_email(email_data, body_html, mc_model.Email.State.failed)
+            return False
         else:
             if not self.stop_outgoing:
                 self._save_email(email_data, body_html)
+
+        return True
 
     def add_attachments(
         self, msg: EmailMessage, attachments: Iterable[Attachment]
     ) -> None:
         """Add attachments to the email message."""
         for attachment in attachments:
-            if len(attachment) == ATTACHMENT_WITH_TYPE_LEN:
-                name, _file, media_type = cast(AttachmentWithType, attachment)
-            else:
-                name, _file = cast(AttachmentWithoutType, attachment)
-                media_type = None
+            name = attachment["name"]
+            content = attachment["content"]
+            media_type = attachment.get("media_type")
+            cid = attachment.get("cid")
+            disposition = attachment.get("disposition")
 
+            # Guess media type if not provided
             if not media_type:
                 media_type, _ = mimetypes.guess_type(name)
 
-            main_type, sub_type = media_type.split("/") if media_type else (None, None)
+            main_type, sub_type = (
+                media_type.split("/") if media_type else ("application", "octet-stream")
+            )
 
+            # Add the attachment first
             msg.add_attachment(
-                _file.read(),
-                filename=name,
+                content,
                 maintype=main_type,
                 subtype=sub_type,
+                filename=name,
+                disposition=disposition or ("inline" if cid else "attachment"),
+                cid=cid if cid else None,
             )
 
     def get_connection(self) -> smtplib.SMTP:
@@ -190,7 +194,9 @@ class DefaultMailer(BaseMailer):
                     conn.starttls()
                     conn.ehlo()
                 else:
-                    raise MailerException("SMTP server does not support STARTTLS") # noqa: TRY003
+                    raise MailerException(
+                        "SMTP server does not support STARTTLS"
+                    )  # noqa: TRY003
 
             if self.user:
                 conn.login(self.user, self.password)
@@ -219,7 +225,7 @@ class DefaultMailer(BaseMailer):
             log.info("Sent email to %s", recipients)
         except smtplib.SMTPException as e:
             log.exception("Error sending email: %s")
-            raise MailerException("Error sending email: %s", e) from e # noqa: TRY003
+            raise MailerException("Error sending email: %s", e) from e  # noqa: TRY003
         finally:
             conn.quit()
 
@@ -236,7 +242,7 @@ class DefaultMailer(BaseMailer):
         body_html: str,
         headers: dict[str, Any] | None = None,
         attachments: Iterable[Attachment] | None = None,
-    ) -> None:
+    ) -> bool:
         """Sends an email to a CKAN user by its ID or name."""
         user_obj = model.User.get(user)
 
@@ -246,7 +252,7 @@ class DefaultMailer(BaseMailer):
         if not user_obj.email:
             raise MailerException(tk._("User doesn't have an email address"))
 
-        self.mail_recipients(
+        return self.mail_recipients(
             subject,
             [user_obj.email],
             body,

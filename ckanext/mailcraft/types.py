@@ -1,12 +1,18 @@
 from __future__ import annotations
 
-from typing import IO
+from typing import TypedDict
 
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import NotRequired
 
-AttachmentWithType = tuple[str, IO[str], str] | tuple[str, IO[bytes], str]
-AttachmentWithoutType = tuple[str, IO[str]] | tuple[str, IO[bytes]]
-Attachment = AttachmentWithType | AttachmentWithoutType
+
+class Attachment(TypedDict):
+    """Attachment structure."""
+
+    name: str
+    content: bytes
+    media_type: NotRequired[str | None]
+    cid: NotRequired[str | None]
+    disposition: NotRequired[str]
 
 
 EmailData = TypedDict(

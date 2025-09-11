@@ -32,6 +32,7 @@ def before_request() -> None:
 
 class DashboardTable(TableDefinition):
     """Table definition for the mailcraft dashboard."""
+
     def __init__(self):
         """Initialize the table definition."""
         super().__init__(
@@ -84,6 +85,7 @@ class DashboardTable(TableDefinition):
 
 class DashboardView(ApTableView):
     """View for the mailcraft dashboard."""
+
     def get_global_action(self, value: str) -> GlobalActionHandler | None:
         """Return the handler for a global action."""
         return {"delete": self._remove_emails}.get(value)
@@ -103,6 +105,7 @@ class DashboardView(ApTableView):
 
 class MailReadView(MethodView):
     """View for reading a single email."""
+
     def get(self, mail_id: str) -> str:
         """Render the email reading template."""
         try:
@@ -115,6 +118,7 @@ class MailReadView(MethodView):
 
 class MailClearView(MethodView):
     """View for clearing all emails."""
+
     def post(self) -> Response:
         """Clear all emails and redirect to the dashboard."""
         tk.get_action("mc_mail_clear")(_build_context(), {})
@@ -124,6 +128,7 @@ class MailClearView(MethodView):
 
 class MailTestView(MethodView):
     """View for sending a test email."""
+
     def post(self) -> Response:
         """Send a test email and redirect to the dashboard."""
         mailer = get_mailer()
