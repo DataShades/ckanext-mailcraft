@@ -21,7 +21,9 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 keywords = ["CKAN"]
-dependencies = []
+dependencies = [
+    "ckanext-tables>=0.1.0,<1.0.0"
+]
 
 [project.optional-dependencies]
 

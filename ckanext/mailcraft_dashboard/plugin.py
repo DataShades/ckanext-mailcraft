@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import ckan.plugins as plugins
-import ckan.plugins.toolkit as toolkit
+import ckan.plugins as p
+import ckan.plugins.toolkit as tk
+from ckan.common import CKANConfig
 
 
-@toolkit.blanket.blueprints
-@toolkit.blanket.actions
-@toolkit.blanket.auth_functions
-@toolkit.blanket.validators
-@toolkit.blanket.helpers
-class MailcraftDashboardPlugin(plugins.SingletonPlugin):
-    plugins.implements(plugins.IConfigurer)
+@tk.blanket.blueprints
+@tk.blanket.actions
+@tk.blanket.auth_functions
+@tk.blanket.validators
+class MailcraftDashboardPlugin(p.SingletonPlugin):
+    p.implements(p.IConfigurer)
 
     # IConfigurer
 
-    def update_config(self, config_):
-        toolkit.add_resource("assets", "mailcraft_dashboard")
-        toolkit.add_template_directory(config_, "templates")
+    def update_config(self, config_: CKANConfig):
+        tk.add_template_directory(config_, "templates")

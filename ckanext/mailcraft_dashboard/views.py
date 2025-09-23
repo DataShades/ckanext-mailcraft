@@ -2,22 +2,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from ckanext.mailcraft.utils import get_mailer
-from ckanext.mailcraft_dashboard.generics import ApTableView
-from ckanext.mailcraft_dashboard.table import (
-    ActionDefinition,
-    ColumnDefinition,
-    GlobalActionDefinition,
-    GlobalActionHandler,
-    GlobalActionHandlerResult,
-    Row,
-    TableDefinition,
-)
-
-import ckan.plugins.toolkit as tk
-from ckan import types
 from flask import Blueprint, Response
 from flask.views import MethodView
+from sqlalchemy import func, select
+from sqlalchemy.sql import Select
+
+import ckan.plugins.toolkit as tk
+from ckan import model, types
+
+from ckanext.tables import generics, table
+from ckanext.tables import types as table_types
+
+from ckanext.mailcraft.utils import get_mailer
+from ckanext.mailcraft_dashboard.model import Email
 
 mailcraft = Blueprint("mailcraft", __name__, url_prefix="/ckan-admin/mailcraft")
 
@@ -30,36 +27,40 @@ def before_request() -> None:
         tk.abort(403, tk._("Need to be system administrator to administer"))
 
 
-class DashboardTable(TableDefinition):
+class DashboardTable(table.TableDefinition):
     """Table definition for the mailcraft dashboard."""
 
     def __init__(self):
         """Initialize the table definition."""
         super().__init__(
-            name="content",
+            name="mails",
             ajax_url=tk.url_for("mailcraft.dashboard", data=True),
             columns=[
-                ColumnDefinition(field="id", filterable=False, resizable=False),
-                ColumnDefinition(field="subject", width=250),
-                ColumnDefinition(field="sender"),
-                ColumnDefinition(field="recipient"),
-                ColumnDefinition(field="state", resizable=False, width=100),
-                ColumnDefinition(
+                table.ColumnDefinition(
+                    field="id", filterable=False, resizable=False, width=60
+                ),
+                table.ColumnDefinition(field="subject", width=250),
+                table.ColumnDefinition(field="sender"),
+                table.ColumnDefinition(field="recipient"),
+                table.ColumnDefinition(field="state", resizable=False, width=100),
+                table.ColumnDefinition(
                     field="timestamp",
                     formatters=[("date", {"date_format": "%Y-%m-%d %H:%M"})],
                     resizable=False,
+                    width=150,
                 ),
-                ColumnDefinition(
+                table.ColumnDefinition(
                     field="actions",
                     formatters=[("actions", {})],
                     filterable=False,
                     tabulator_formatter="html",
                     sorter=None,
                     resizable=False,
+                    width=100,
                 ),
             ],
             actions=[
-                ActionDefinition(
+                table.ActionDefinition(
                     name="view",
                     label=tk._("View"),
                     icon="fa fa-eye",
@@ -71,27 +72,55 @@ class DashboardTable(TableDefinition):
                 ),
             ],
             global_actions=[
-                GlobalActionDefinition(
-                    action="delete", label="Delete selected entities"
+                table.GlobalActionDefinition(
+                    action="delete", label=tk._("Delete selected entities")
                 ),
             ],
             table_action_snippet="mailcraft/table_actions.html",
         )
 
-    def get_raw_data(self) -> list[dict[str, Any]]:
+    def get_raw_data(self, params: table.QueryParams) -> list[dict[str, Any]]:
         """Fetch raw data for the table."""
-        return tk.get_action("mc_mail_list")(_build_context(), {})
+        return [
+            dict(row)
+            for row in model.Session.execute(self._build_query(params)).mappings().all()
+        ]
+
+    def get_total_count(self, params: table.QueryParams) -> int:
+        stmt = self.filter_query(
+            select(Email.id),
+            Email,
+            params,
+            apply_pagination=False,
+        )
+        return model.Session.execute(
+            select(func.count()).select_from(stmt.subquery())
+        ).scalar_one()
+
+    def _build_query(self, params: table.QueryParams) -> Select:
+        return self.filter_query(
+            select(
+                Email.id,
+                Email.subject,
+                Email.sender,
+                Email.recipient,
+                Email.state,
+                Email.timestamp,
+            ),
+            Email,
+            params,
+        )
 
 
-class DashboardView(ApTableView):
+class DashboardView(generics.GenericTableView):
     """View for the mailcraft dashboard."""
 
-    def get_global_action(self, value: str) -> GlobalActionHandler | None:
+    def get_global_action(self, value: str) -> table_types.GlobalActionHandler | None:
         """Return the handler for a global action."""
         return {"delete": self._remove_emails}.get(value)
 
     @staticmethod
-    def _remove_emails(row: Row) -> GlobalActionHandlerResult:
+    def _remove_emails(row: table_types.Row) -> table_types.GlobalActionHandlerResult:
         try:
             tk.get_action("mc_mail_delete")(
                 {"ignore_auth": True},
@@ -155,6 +184,8 @@ def _build_context() -> types.Context:
         "auth_user_obj": tk.current_user,
     }
 
+
+mailcraft.before_request(before_request)
 
 mailcraft.add_url_rule("/test", view_func=MailTestView.as_view("send_test"))
 mailcraft.add_url_rule(

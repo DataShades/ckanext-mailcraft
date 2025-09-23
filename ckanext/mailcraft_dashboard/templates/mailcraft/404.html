@@ -6,7 +6,7 @@
     <li class="active">{% link_for _("Mailcraft 404"), named_route='mailcraft.dashboard' %}</li>
 {% endblock breadcrumb_content %}
 
-{% block ap_content %}
+{% block page_content %}
     <div class="module-content">
         <a href="{{ h.url_for('mailcraft.dashboard') }}" class="btn btn-default mb-3">
             <i class="fa fa-arrow-left"></i>
@@ -15,4 +15,4 @@
 
         <p>{{ _("Mail not found") }}</p>
     </div>
-{% endblock ap_content %}
+{% endblock page_content %}

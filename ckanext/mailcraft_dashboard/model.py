@@ -4,12 +4,12 @@ import logging
 from typing import Any
 
 from sqlalchemy import Column, DateTime, Integer, Text, func
-from sqlalchemy.orm import Query
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.orm import Query
 from typing_extensions import Self
 
-import ckan.model as model
+from ckan import model, types
 from ckan.plugins import toolkit as tk
 
 from ckanext.mailcraft.types import EmailData
@@ -37,12 +37,12 @@ class Email(tk.BaseModel):
 
     @classmethod
     def all(cls) -> list[dict[str, Any]]:
-        query: Query = model.Session.query.query(cls).order_by(cls.timestamp.desc())
+        query: Query = model.Session.query(cls).order_by(cls.timestamp.desc())
 
         return [mail.dictize({}) for mail in query.all()]
 
     @classmethod
-    def create(cls, **kwargs) -> Email:
+    def create(cls, **kwargs: Any) -> Email:
         mail = cls(**kwargs)
 
         model.Session.add(mail)
@@ -72,7 +72,7 @@ class Email(tk.BaseModel):
 
         return mail
 
-    def dictize(self, context):
+    def dictize(self, context: types.Context) -> dict[str, Any]:
         return {
             "id": self.id,
             "subject": self.subject,

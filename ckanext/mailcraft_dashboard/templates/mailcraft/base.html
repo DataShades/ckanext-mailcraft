@@ -5,17 +5,6 @@
 
 {% block primary %}
     <div class="primary col-12" role="main">
-        {% block ap_content %}{% endblock ap_content %}
+        {% block page_content %}{% endblock page_content %}
     </div>
-{% endblock %}
-
-{% block scripts %}
-    {{ super() }}
-
-    {% asset "mailcraft_dashboard/mc-dashboard-js" %}
-{% endblock %}
-
-{% block styles %}
-    {{ super() }}
-    {% asset "mailcraft_dashboard/mc-dashboard-css" %}
 {% endblock %}
