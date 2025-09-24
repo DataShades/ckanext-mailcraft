@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2025-09-24
+
+### 🚀 Features
+
+- Update for ckanext-tables 0.2.0
+
+## [0.7.0] - 2025-09-23
+
+### 🚀 Features
+
+- Replace custom tables with ckanext-tables
+
+### 💼 Other
+
+- Update version [no ci]
+
+### 📚 Documentation
+
+- Update changelog [no ci]
+
 ## [0.6.0] - 2025-09-11
 
 ### 🚀 Features
