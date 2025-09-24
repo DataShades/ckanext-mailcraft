@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ckanext-mailcraft"
-version = "0.7.0"
+version = "0.8.0"
 description = "Custom extandable mailer for CKAN"
 authors = [
     {name = "DataShades", email = "datashades@linkdigital.com.au"},
@@ -22,7 +22,7 @@ classifiers = [
 ]
 keywords = ["CKAN"]
 dependencies = [
-    "ckanext-tables>=0.1.0,<1.0.0"
+    "ckanext-tables>=0.2.0,<1.0.0"
 ]
 
 [project.optional-dependencies]
