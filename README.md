@@ -12,7 +12,7 @@ The `ckanext-mailcraft` adds powerful email management features to CKAN, making 
 - Redirection – configurable option to reroute all outgoing emails to one or more specified addresses
 
 To enable the extension, add `mailcraft` to the `ckan.plugins` setting in your CKAN.
-If you want to enable the dashboard you should also add `mailcraft_dashboard` to the `ckan.plugins` setting.
+If you want to enable the dashboard you should also add `tables mailcraft_dashboard` to the `ckan.plugins` setting.
 
 ## Usage
 To use a mailer, you just have to import it and initialize the mailer.
@@ -38,7 +38,9 @@ mailer.mail_recipients(
 
 ## Dashboard
 ****
-To access the dashboard, first ensure that the `mailcraft_dashboard` plugin is enabled in your CKAN configuration. Then you'll have a button at the top right of the CKAN interface that will take you to the Mailcraft dashboard.
+To access the dashboard, first ensure that the `tables mailcraft_dashboard` plugins are enabled in your CKAN configuration. Then you'll have a button at the top right of the CKAN interface that will take you to the Mailcraft dashboard.
+
+The `tables` plugin is required to render the dashboard table.
 
 ![dashboard button](doc/button.png)
 
