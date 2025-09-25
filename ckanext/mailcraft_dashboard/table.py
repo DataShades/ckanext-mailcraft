@@ -13,6 +13,7 @@ from ckanext.tables.shared import (
     GlobalActionHandlerResult,
     Row,
     TableDefinition,
+    formatters,
 )
 
 from ckanext.mailcraft_dashboard.model import Email
@@ -46,13 +47,17 @@ class DashboardTable(TableDefinition):
                 ColumnDefinition(field="state", resizable=False, width=100),
                 ColumnDefinition(
                     field="timestamp",
-                    formatters=[("date", {"date_format": "%Y-%m-%d %H:%M"})],
+                    formatters=[
+                        (formatters.DateFormatter, {"date_format": "%Y-%m-%d %H:%M"}),
+                        (formatters.TextBoldFormatter, {})
+                    ],
+                    tabulator_formatter="html",
                     resizable=False,
                     width=150,
                 ),
                 ColumnDefinition(
                     field="actions",
-                    formatters=[("actions", {})],
+                    formatters=[(formatters.ActionsFormatter, {})],
                     filterable=False,
                     tabulator_formatter="html",
                     sortable=False,
