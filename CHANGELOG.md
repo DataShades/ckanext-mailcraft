@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.1] - 2025-09-25
+
+### 💼 Other
+
+- Update changelog [no ci]
+
+### 🚜 Refactor
+
+- Update to use ckanext-tables 0.3.0
+
 ## [0.8.0] - 2025-09-24
 
 ### 🚀 Features
