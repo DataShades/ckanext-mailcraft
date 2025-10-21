@@ -23,7 +23,7 @@ classifiers = [
 ]
 keywords = ["CKAN"]
 dependencies = [
-    "ckanext-tables>=1.1.0,<2.0.0"
+    "ckanext-tables>=1.2.0,<2.0.0"
 ]
 
 [project.optional-dependencies]

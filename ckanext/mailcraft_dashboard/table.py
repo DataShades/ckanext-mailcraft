@@ -6,15 +6,14 @@ import ckan.plugins.toolkit as tk
 from ckan.types import Context
 
 from ckanext.tables.shared import (
+    ActionHandlerResult,
     BulkActionDefinition,
     BulkActionHandlerResult,
     ColumnDefinition,
     DatabaseDataSource,
     Row,
     RowActionDefinition,
-    RowActionHandlerResult,
     TableActionDefinition,
-    TableActionHandlerResult,
     TableDefinition,
     formatters,
 )
@@ -106,24 +105,24 @@ class DashboardTable(TableDefinition):
         )
 
     @staticmethod
-    def row_action_view(row: Row) -> RowActionHandlerResult:
-        return RowActionHandlerResult(
+    def row_action_view(row: Row) -> ActionHandlerResult:
+        return ActionHandlerResult(
             success=True,
             error=None,
             redirect=tk.h.url_for("mailcraft.mail_read", mail_id=row["id"]),
         )
 
     @staticmethod
-    def row_action_delete(row: Row) -> RowActionHandlerResult:
+    def row_action_delete(row: Row) -> ActionHandlerResult:
         try:
             tk.get_action("mc_mail_delete")(
                 {"ignore_auth": True},
                 {"id": row["id"]},
             )
         except tk.ObjectNotFound:
-            return RowActionHandlerResult(success=False, error=tk._("Mail not found"))
+            return ActionHandlerResult(success=False, error=tk._("Mail not found"))
 
-        return RowActionHandlerResult(success=True, error=None)
+        return ActionHandlerResult(success=True, error=None)
 
     @staticmethod
     def bulk_action_remove_emails(row: Row) -> BulkActionHandlerResult:
@@ -133,19 +132,19 @@ class DashboardTable(TableDefinition):
                 {"id": row["id"]},
             )
         except tk.ObjectNotFound:
-            return False, tk._("Mail not found")
+            return BulkActionHandlerResult(success=False, error=tk._("Mail not found"))
 
-        return True, None
+        return BulkActionHandlerResult(success=True, error=None)
 
-    def table_action_clear_emails(self) -> TableActionHandlerResult:
+    def table_action_clear_emails(self) -> ActionHandlerResult:
         try:
             tk.get_action("mc_mail_clear")({"ignore_auth": True}, {})
         except tk.ValidationError as e:
-            return False, str(e)
+            return ActionHandlerResult(success=False, error=str(e))
 
-        return True, None
+        return ActionHandlerResult(success=True, error=None)
 
-    def table_action_send_test_mail(self) -> TableActionHandlerResult:
+    def table_action_send_test_mail(self) -> ActionHandlerResult:
         """Send a test email and redirect to the dashboard."""
         mailer = get_mailer()
 
@@ -163,9 +162,12 @@ class DashboardTable(TableDefinition):
         )
 
         if not result:
-            return False, tk._("Failed to send test email. Check your mail settings.")
+            return ActionHandlerResult(
+                success=False,
+                error=tk._("Failed to send test email. Check your mail settings."),
+            )
 
-        return True, None
+        return ActionHandlerResult(success=True, error=None)
 
     @classmethod
     def check_access(cls, context: Context) -> None:
