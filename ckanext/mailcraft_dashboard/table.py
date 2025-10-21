@@ -6,16 +6,21 @@ import ckan.plugins.toolkit as tk
 from ckan.types import Context
 
 from ckanext.tables.shared import (
-    ActionDefinition,
+    BulkActionDefinition,
+    BulkActionHandlerResult,
     ColumnDefinition,
     DatabaseDataSource,
-    GlobalActionDefinition,
-    GlobalActionHandlerResult,
     Row,
+    RowActionDefinition,
+    RowActionHandlerResult,
+    TableActionDefinition,
+    TableActionHandlerResult,
     TableDefinition,
     formatters,
 )
 
+from ckanext.mailcraft.utils import get_mailer
+from ckanext.mailcraft_dashboard.formatters import StatusFormatter
 from ckanext.mailcraft_dashboard.model import Email
 
 
@@ -38,57 +43,90 @@ class DashboardTable(TableDefinition):
                 model=Email,
             ),
             columns=[
-                ColumnDefinition(
-                    field="id", filterable=False, resizable=False, width=60
-                ),
                 ColumnDefinition(field="subject", width=250),
                 ColumnDefinition(field="sender"),
                 ColumnDefinition(field="recipient"),
-                ColumnDefinition(field="state", resizable=False, width=100),
+                ColumnDefinition(
+                    field="state",
+                    resizable=False,
+                    width=100,
+                    tabulator_formatter="html",
+                    formatters=[(StatusFormatter, {})],
+                ),
                 ColumnDefinition(
                     field="timestamp",
                     formatters=[
-                        (formatters.DateFormatter, {"date_format": "%Y-%m-%d %H:%M"}),
-                        (formatters.TextBoldFormatter, {})
+                        (
+                            formatters.DateFormatter,
+                            {"date_format": "%Y-%m-%dT%H:%M:%S"},
+                        ),
                     ],
                     tabulator_formatter="html",
                     resizable=False,
-                    width=150,
-                ),
-                ColumnDefinition(
-                    field="actions",
-                    formatters=[(formatters.ActionsFormatter, {})],
-                    filterable=False,
-                    tabulator_formatter="html",
-                    sortable=False,
-                    resizable=False,
-                    width=100,
+                    width=170,
                 ),
             ],
-            actions=[
-                ActionDefinition(
-                    name="view",
+            row_actions=[
+                RowActionDefinition(
+                    action="view",
                     label=tk._("View"),
                     icon="fa fa-eye",
-                    endpoint="mailcraft.mail_read",
-                    url_params={
-                        "view": "read",
-                        "mail_id": "$id",
-                    },
+                    callback=self.row_action_view,
+                ),
+                RowActionDefinition(
+                    action="delete",
+                    label=tk._("Delete"),
+                    icon="fa fa-trash",
+                    callback=self.row_action_delete,
+                    with_confirmation=True
                 ),
             ],
-            global_actions=[
-                GlobalActionDefinition(
+            bulk_actions=[
+                BulkActionDefinition(
                     action="delete",
                     label=tk._("Delete selected entities"),
-                    callback=self.ga_remove_emails,
+                    icon="fa fa-trash",
+                    callback=self.bulk_action_remove_emails,
+                )
+            ],
+            table_actions=[
+                TableActionDefinition(
+                    action="clear_emails",
+                    label=tk._("Clear mails"),
+                    icon="fa fa-trash",
+                    callback=self.table_action_clear_emails,
+                ),
+                TableActionDefinition(
+                    action="send_test_mail",
+                    label=tk._("Send test mail"),
+                    icon="fa fa-paper-plane",
+                    callback=self.table_action_send_test_mail,
                 ),
             ],
-            table_action_snippet="mailcraft/table_actions.html",
         )
 
     @staticmethod
-    def ga_remove_emails(row: Row) -> GlobalActionHandlerResult:
+    def row_action_view(row: Row) -> RowActionHandlerResult:
+        return RowActionHandlerResult(
+            success=True,
+            error=None,
+            redirect=tk.h.url_for("mailcraft.mail_read", mail_id=row["id"]),
+        )
+
+    @staticmethod
+    def row_action_delete(row: Row) -> RowActionHandlerResult:
+        try:
+            tk.get_action("mc_mail_delete")(
+                {"ignore_auth": True},
+                {"id": row["id"]},
+            )
+        except tk.ObjectNotFound:
+            return RowActionHandlerResult(success=False, error=tk._("Mail not found"))
+
+        return RowActionHandlerResult(success=True, error=None)
+
+    @staticmethod
+    def bulk_action_remove_emails(row: Row) -> BulkActionHandlerResult:
         try:
             tk.get_action("mc_mail_delete")(
                 {"ignore_auth": True},
@@ -96,6 +134,36 @@ class DashboardTable(TableDefinition):
             )
         except tk.ObjectNotFound:
             return False, tk._("Mail not found")
+
+        return True, None
+
+    def table_action_clear_emails(self) -> TableActionHandlerResult:
+        try:
+            tk.get_action("mc_mail_clear")({"ignore_auth": True}, {})
+        except tk.ValidationError as e:
+            return False, str(e)
+
+        return True, None
+
+    def table_action_send_test_mail(self) -> TableActionHandlerResult:
+        """Send a test email and redirect to the dashboard."""
+        mailer = get_mailer()
+
+        result = mailer.mail_recipients(
+            subject="Hello world",
+            recipients=["test@gmail.com"],
+            body="Hello world",
+            body_html=tk.render(
+                "mailcraft/emails/test.html",
+                extra_vars={
+                    "site_url": mailer.site_url,
+                    "site_title": mailer.site_title,
+                },
+            ),
+        )
+
+        if not result:
+            return False, tk._("Failed to send test email. Check your mail settings.")
 
         return True, None
 
