@@ -200,7 +200,9 @@ class DefaultMailer(BaseMailer):
                     disposition=disposition or "attachment",
                     content_type=content_type,
                     size=len(payload) if payload else 0,
-                    data=base64.b64encode(payload).decode("utf-8") if self.store_att_content else None,  # type: ignore
+                    data=base64.b64encode(payload).decode("utf-8")
+                    if self.store_att_content
+                    else None,  # type: ignore
                 )
             )
         return attachments

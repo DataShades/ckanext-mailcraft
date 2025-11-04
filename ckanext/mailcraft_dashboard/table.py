@@ -15,6 +15,7 @@ from ckanext.tables.shared import (
     RowActionDefinition,
     TableActionDefinition,
     TableDefinition,
+    exporters,
     formatters,
 )
 
@@ -77,7 +78,7 @@ class DashboardTable(TableDefinition):
                     label=tk._("Delete"),
                     icon="fa fa-trash",
                     callback=self.row_action_delete,
-                    with_confirmation=True
+                    with_confirmation=True,
                 ),
             ],
             bulk_actions=[
@@ -101,6 +102,15 @@ class DashboardTable(TableDefinition):
                     icon="fa fa-paper-plane",
                     callback=self.table_action_send_test_mail,
                 ),
+            ],
+            exporters=[
+                exporters.CSVExporter,
+                exporters.JSONExporter,
+                exporters.XLSXExporter,
+                exporters.YAMLExporter,
+                exporters.TSVExporter,
+                exporters.NDJSONExporter,
+                exporters.HTMLExporter,
             ],
         )
 

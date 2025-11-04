@@ -8,6 +8,8 @@ from ckan import types
 
 from ckanext.tables.shared import GenericTableView
 
+from ckanext.mailcraft_dashboard.table import DashboardTable
+
 mailcraft = Blueprint("mailcraft", __name__, url_prefix="/ckan-admin/mailcraft")
 
 
@@ -40,5 +42,9 @@ def _build_context() -> types.Context:
 
 mailcraft.before_request(before_request)
 
-mailcraft.add_url_rule("/dashboard", view_func=GenericTableView.as_view("dashboard", table="mailcraft"))
-mailcraft.add_url_rule("/dashboard/read/<mail_id>", view_func=MailReadView.as_view("mail_read"))
+mailcraft.add_url_rule(
+    "/dashboard", view_func=GenericTableView.as_view("dashboard", table=DashboardTable)
+)
+mailcraft.add_url_rule(
+    "/dashboard/read/<mail_id>", view_func=MailReadView.as_view("mail_read")
+)
