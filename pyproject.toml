@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ckanext-mailcraft"
-version = "0.9.2"
+version = "0.9.3"
 
 description = "Custom extandable mailer for CKAN"
 authors = [
@@ -23,7 +23,7 @@ classifiers = [
 ]
 keywords = ["CKAN"]
 dependencies = [
-    "ckanext-tables>=1.5.1,<2.0.0"
+    "ckanext-tables>=1.8.0,<2.0.0"
 ]
 
 [project.optional-dependencies]

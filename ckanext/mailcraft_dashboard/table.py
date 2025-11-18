@@ -8,7 +8,6 @@ from ckan.types import Context
 from ckanext.tables.shared import (
     ActionHandlerResult,
     BulkActionDefinition,
-    BulkActionHandlerResult,
     ColumnDefinition,
     DatabaseDataSource,
     Row,
@@ -40,7 +39,6 @@ class DashboardTable(TableDefinition):
                     Email.state,
                     Email.timestamp,
                 ).order_by(Email.timestamp.desc()),
-                model=Email,
             ),
             columns=[
                 ColumnDefinition(field="subject", width=250),
@@ -135,16 +133,17 @@ class DashboardTable(TableDefinition):
         return ActionHandlerResult(success=True, error=None)
 
     @staticmethod
-    def bulk_action_remove_emails(row: Row) -> BulkActionHandlerResult:
+    def bulk_action_remove_emails(rows: list[Row]) -> ActionHandlerResult:
         try:
-            tk.get_action("mc_mail_delete")(
-                {"ignore_auth": True},
-                {"id": row["id"]},
-            )
+            for row in rows:
+                tk.get_action("mc_mail_delete")(
+                    {"ignore_auth": True},
+                    {"id": row["id"]},
+                )
         except tk.ObjectNotFound:
-            return BulkActionHandlerResult(success=False, error=tk._("Mail not found"))
+            pass
 
-        return BulkActionHandlerResult(success=True, error=None)
+        return ActionHandlerResult(success=True, error=None)
 
     def table_action_clear_emails(self) -> ActionHandlerResult:
         try:

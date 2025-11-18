@@ -1,7 +1,7 @@
 import pytest
+from factory.declarations import LazyFunction
 from faker import Faker
 from pytest_factoryboy import register
-from factory.declarations import LazyFunction
 
 from ckan.tests import factories
 
