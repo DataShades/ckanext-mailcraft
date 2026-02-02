@@ -30,7 +30,7 @@ class BaseMailer(ABC):
 
     def __init__(self):
         """Initialize the mailer with SMTP settings from CKAN config."""
-        self.server = tk.config["smtp.server"]
+        self.server: str = tk.config["smtp.server"]
         self.start_tls = tk.asbool(tk.config["smtp.starttls"])
         self.user = tk.config["smtp.user"]
         self.password = tk.config["smtp.password"]
@@ -209,8 +209,11 @@ class DefaultMailer(BaseMailer):
 
     def get_connection(self) -> smtplib.SMTP:
         """Get an SMTP conn object."""
+        parts = self.server.rsplit(":", 1)
+        host = parts[0]
+        port = int(parts[1]) if len(parts) == 2 else 0
         try:
-            conn = smtplib.SMTP(self.server, timeout=self.conn_timeout)
+            conn = smtplib.SMTP(host, port, timeout=self.conn_timeout)
         except OSError as e:
             log.exception('SMTP server could not be connected to: "%s"', self.server)
             raise MailerException(  # noqa: TRY003
